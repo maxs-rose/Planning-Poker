@@ -1,0 +1,25 @@
+<Project>
+    <!-- Cant be Project Sdk so we can control when things are imported -->
+    <Import Project="Sdk.props" Sdk="Microsoft.VisualStudio.JavaScript.SDK" Version="1.0.3653345"/>
+
+    <PropertyGroup>
+        <BuildCommand>pnpm build</BuildCommand>
+        <StartupCommand>pnpm dev</StartupCommand>
+        <NpmInstallCheck>$(PackageJsonDirectory)pnpm-lock.yaml</NpmInstallCheck>
+    </PropertyGroup>
+
+    <Import Project="Sdk.targets" Sdk="Microsoft.VisualStudio.JavaScript.SDK" Version="1.0.3653345"/>
+
+    <Target Name="RunNpmInstall" Condition=" $(ShouldRunNpmInstall) == 'true' " DependsOnTargets="PreNpmInstallCheck" Inputs="$(PackageJsonDirectory)\package.json" Outputs="$(NpmInstallCheck)">
+        <!-- Ensure Node.js is installed -->
+        <Exec Command="node --version" ContinueOnError="true">
+            <Output TaskParameter="ExitCode" PropertyName="ErrorCodeNpmVersion"/>
+        </Exec>
+        <Error Condition="'$(ErrorCodeNpmVersion)' != '0'" Text="Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/, and then restart your command prompt or IDE."/>
+        <Message Importance="high" Text="Restoring dependencies using 'pnpm'. This may take several minutes..."/>
+        <Exec WorkingDirectory="$(PackageJsonDirectory)" Command="pnpm install">
+            <Output TaskParameter="ExitCode" PropertyName="ErrorCodeNpmInstall"/>
+        </Exec>
+        <Touch Files="$(NpmInstallCheck)" Condition="'$(ErrorCodeNpmInstall)' == '0'" AlwaysCreate="true"/>
+    </Target>
+</Project>

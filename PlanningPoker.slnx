@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Api/Api.csproj" />
+  <Project Path="AppHost\AppHost.csproj" Type="Classic C#" />
+  <Project Path="Client\Client.esproj" Type="{54A90642-561A-4BB1-A94E-469ADEE60C69}">
+    <Configuration Solution="Release|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+</Solution>

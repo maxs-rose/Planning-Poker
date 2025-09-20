@@ -28,4 +28,4 @@ jobs:
           push: true
           file: ./Api/Dockerfile
           context: .
-          tags: ghcr.io/maxsrose/planning-poker:latest
+          tags: ghcr.io/maxs-rose/planning-poker:latest

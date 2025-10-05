@@ -1,0 +1,23 @@
+name: Test
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore Project
+        run: dotnet restore
+      - name: Build Project
+        run: dotnet build --no-restore
+      - name: Test Project
+        run: dotnet test --no-build

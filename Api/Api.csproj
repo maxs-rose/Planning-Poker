@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Bogus" Version="35.6.3"/>
+        <PackageReference Include="Bogus" Version="35.6.4"/>
         <PackageReference Include="Dunet" Version="1.11.3"/>
         <PackageReference Include="FastEndpoints" Version="7.0.1"/>
         <PackageReference Include="FastEndpoints.Generator" Version="7.0.1">
@@ -20,7 +20,7 @@
         <PackageReference Include="Serilog.AspNetCore" Version="9.0.0"/>
         <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0"/>
         <PackageReference Include="System.Linq.Async" Version="6.0.3"/>
-        <PackageReference Include="System.Reactive" Version="6.0.2"/>
+        <PackageReference Include="System.Reactive" Version="6.1.0"/>
     </ItemGroup>
 
     <ItemGroup>

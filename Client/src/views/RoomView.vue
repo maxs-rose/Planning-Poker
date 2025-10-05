@@ -124,8 +124,10 @@ const updateRoom = async (action: 'reveal' | 'reset') => {
       </PlayerList>
     </div>
 
-    <VotingTable v-if="!reveal.state" :roomId="props.roomId" />
-    <VotingResult v-if="reveal.state" :players="room.players" :votes="room.votes" />
+    <div class="w-full max-w-7xl">
+      <VotingTable v-if="!reveal.state" :roomId="props.roomId" />
+      <VotingResult v-if="reveal.state" :players="room.players" :votes="room.votes" />
+    </div>
   </div>
 </template>
 

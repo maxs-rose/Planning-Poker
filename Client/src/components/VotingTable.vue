@@ -25,7 +25,7 @@ const vote = async (number: number) => {
 </script>
 
 <template>
-  <ul class="flex flex-row gap-2 flex-wrap items-center justify-center">
+  <ul class="flex flex-row flex-wrap gap-2 items-center justify-center">
     <li v-for="index in cardValues">
       <Card :onVote="vote" :value="getFibbonacciNumber(index)" />
     </li>

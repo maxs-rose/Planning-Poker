@@ -24,7 +24,6 @@ const chartData = {
   labels: Object.keys(data),
   datasets: [
     {
-      backgroundColor: ['#f94144', '#f3722c', '#ff006e', '#f72585', '#480ca8', '#3f37c9', '#00f5d4', '#277da1'],
       data: Object.values(data),
     },
   ],

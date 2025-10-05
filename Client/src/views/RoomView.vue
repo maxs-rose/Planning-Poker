@@ -96,9 +96,9 @@ const updateRoom = async (action: 'reveal' | 'reset') => {
 </script>
 
 <template>
-  <div class="p-6 flex flex-col gap-2 items-start">
-    <div class="w-full flex items-center justify-center flex-row gap-2">
-      <Card v-if="room.owner">
+  <div class="p-6 flex flex-row gap-2 items-start justify-center">
+    <div class="flex flex-col items-center justify-center gap-2 w-xl min-w-lg">
+      <Card v-if="room.owner" class="w-full">
         <CardHeader>
           <CardTitle>Host Tools</CardTitle>
         </CardHeader>
@@ -114,7 +114,7 @@ const updateRoom = async (action: 'reveal' | 'reset') => {
         :reveal="reveal.state"
         :roomId="props.roomId"
         :votes="room.votes"
-        class="min-w-[450px]"
+        class="w-full"
       >
         <div class="flex flex-col gap-2">
           <p class="text-nowrap">Join Code: {{ props.roomId }}</p>

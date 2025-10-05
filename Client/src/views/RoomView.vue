@@ -108,7 +108,14 @@ const updateRoom = async (action: 'reveal' | 'reset') => {
         </CardContent>
       </Card>
 
-      <PlayerList :players="room.players" :reveal="reveal.state" :votes="room.votes" class="min-w-[450px]">
+      <PlayerList
+        :owner="room.owner"
+        :players="room.players"
+        :reveal="reveal.state"
+        :roomId="props.roomId"
+        :votes="room.votes"
+        class="min-w-[450px]"
+      >
         <div class="flex flex-col gap-2">
           <p class="text-nowrap">Join Code: {{ props.roomId }}</p>
 

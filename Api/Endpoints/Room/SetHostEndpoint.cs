@@ -5,22 +5,22 @@ using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Api.Endpoints.Room;
 
-internal sealed class VoteEndpoint(RoomManager roomManager) : Endpoint<VoteRequest, Ok>
+internal sealed class SetHostEndpoint(RoomManager roomManager) : Endpoint<SetHostRequest, Ok>
 {
     public override void Configure()
     {
-        Post("/rooms/{Code}/players/{Player:guid}/vote");
+        Post("/rooms/{Code}/set-host");
     }
 
-    public override Task<Ok> ExecuteAsync(VoteRequest req, CancellationToken ct)
+    public override Task<Ok> ExecuteAsync(SetHostRequest req, CancellationToken ct)
     {
         var room = roomManager.GetRoom(Route<string>("Code")!)!;
 
-        room.Vote(req.Value, Route<Guid>("Player"));
+        room.SetOwner(req.User);
 
         return Task.FromResult(TypedResults.Ok());
     }
 }
 
 [PublicAPI]
-public sealed record VoteRequest(uint Value);
+public sealed record SetHostRequest(Guid User);

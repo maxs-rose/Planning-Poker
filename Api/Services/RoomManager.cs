@@ -129,7 +129,16 @@ internal class Room(string name, string code) : IDisposable
         if (Players.Count == 0)
             return;
 
-        _owner = Players[0];
+        SetOwner(Players[0].Id);
+    }
+
+    public void SetOwner(Guid player)
+    {
+        _owner = Players.FirstOrDefault(p => p.Id == player);
+
+        if (_owner is null)
+            return;
+
         Channel.OnNext((EventType.OwnerChange, _owner));
     }
 }

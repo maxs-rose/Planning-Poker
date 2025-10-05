@@ -10,6 +10,8 @@ import type { Player } from '@/lib/model/player.interface.ts'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import VotingResult from '@/components/VotingResult.vue'
+import { Icon } from '@iconify/vue'
+import { toast } from 'vue-sonner'
 
 const props = defineProps<{
   roomId: string
@@ -93,6 +95,11 @@ roomConnection.addEventListener('Reset', (event) => {
 const updateRoom = async (action: 'reveal' | 'reset') => {
   await fetch(`/api/rooms/${props.roomId}/${action}`)
 }
+
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text)
+  toast("Copied to clipboard")
+}
 </script>
 
 <template>
@@ -117,7 +124,13 @@ const updateRoom = async (action: 'reveal' | 'reset') => {
         class="w-full"
       >
         <div class="flex flex-col gap-2">
-          <p class="text-nowrap">Join Code: {{ props.roomId }}</p>
+          <p class="flex gap-3 text-nowrap">
+            Join Code:
+            <span class="flex gap-2 items-center cursor-pointer" @click="copyToClipboard(props.roomId)">
+              {{ props.roomId }}
+              <Icon icon="radix-icons:copy" />
+            </span>
+          </p>
 
           <h3 class="font-bold">{{ currentState }}</h3>
         </div>

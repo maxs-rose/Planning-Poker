@@ -50,7 +50,7 @@ const chartOptions: ChartOptions<'pie'> = {
 
       <template v-for="entry in Object.entries(data)">
         <div class="font-bold">{{ entry[0] }}</div>
-        <div>{{ (entry[1] / total) * 100 }}%</div>
+        <div>{{ Math.trunc((entry[1] / total) * 100) }}%</div>
       </template>
     </div>
 

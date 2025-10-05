@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import type { Player } from '@/lib/model/player.interface.ts'
 import { Pie } from 'vue-chartjs'
-import { ArcElement, Chart as ChartJS, Tooltip } from 'chart.js'
+import { ArcElement, Chart as ChartJS, type ChartOptions, Colors, Tooltip } from 'chart.js'
 
-ChartJS.register(ArcElement, Tooltip)
+ChartJS.register(ArcElement, Tooltip, Colors)
 
 const props = defineProps<{
   players: Player[]
@@ -30,11 +30,14 @@ const chartData = {
   ],
 }
 
-const chartOptions = {
+const chartOptions: ChartOptions<'pie'> = {
   responsive: true,
   plugins: {
     legend: {
       display: false,
+    },
+    colors: {
+      enabled: true,
     },
   },
 }

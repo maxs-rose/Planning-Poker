@@ -10,14 +10,16 @@ const props = defineProps<{
   votes: Record<string, number>
 }>()
 
-const data = Object.values(props.votes).reduce(
-  (acc, x) => {
-    acc[x] = acc[x] ? acc[x] + 1 : 1
+const data = Object.values(props.votes)
+  .filter((v) => !!v)
+  .reduce(
+    (acc, x) => {
+      acc[x] = acc[x] ? acc[x] + 1 : 1
 
-    return acc
-  },
-  {} as Record<number, number>,
-)
+      return acc
+    },
+    {} as Record<number, number>,
+  )
 const total = Object.values(data).reduce((acc, x) => acc + x, 0)
 
 const chartData = {

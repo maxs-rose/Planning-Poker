@@ -38,7 +38,7 @@ const setHost = async (playerId: string) => {
         <template v-for="player in props.players">
           <div class="col-start-1">{{ player.name }}</div>
 
-          <div v-if="props.reveal">{{ votes[player.id!] ?? 'Abstained' }}</div>
+          <div v-if="props.reveal">{{ votes[player.id!] || 'Abstained' }}</div>
           <div v-else>
             <div v-if="votes[player.id!] !== undefined">
               <Icon icon="radix-icons:check" />

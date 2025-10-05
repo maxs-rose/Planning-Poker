@@ -35,7 +35,7 @@ internal sealed class RoomEndpoint(RoomManager roomManager) : Endpoint<RoomJoin>
         RoomJoin joinRequest,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        var joined = room.JoinRoom(joinRequest.Name);
+        var joined = room.JoinRoom(joinRequest.Name, joinRequest.Spectator ?? false);
 
         ct.Register(() => room.LeaveRoom(joined.PlayerId));
 
@@ -55,4 +55,4 @@ internal sealed class RoomEndpoint(RoomManager roomManager) : Endpoint<RoomJoin>
 }
 
 [PublicAPI]
-public sealed record RoomJoin([property: QueryParam] string Name);
+public sealed record RoomJoin([property: QueryParam] string Name, [property: QueryParam] bool? Spectator = false);

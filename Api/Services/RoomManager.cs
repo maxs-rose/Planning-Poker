@@ -65,7 +65,8 @@ internal class Room(string name, string code) : IDisposable
         Vote,
         Reveal,
         Reset,
-        OwnerChange
+        OwnerChange,
+        PlayerUpdate
     }
 
     private Player? _owner;
@@ -84,6 +85,9 @@ internal class Room(string name, string code) : IDisposable
 
     public void Vote(uint? value, Guid playerId)
     {
+        if (Players.FirstOrDefault(p => p.Id == playerId) is not { IsSpectator: false })
+            return;
+
         if (Votes.FirstOrDefault(v => v.Voter == playerId) is not null)
             Votes.Remove(Votes.First(v => v.Voter == playerId));
 
@@ -102,15 +106,29 @@ internal class Room(string name, string code) : IDisposable
         Channel.OnNext((EventType.Reveal, "reveal"));
     }
 
-    public RoomState JoinRoom(string playerName)
+    public RoomState JoinRoom(string playerName, bool isSpectator)
     {
-        var player = new Player(Guid.NewGuid(), playerName);
+        var player = new Player(Guid.NewGuid(), playerName)
+        {
+            IsSpectator = Players.Count != 0 && isSpectator
+        };
         Players.Add(player);
 
         _owner ??= player;
 
         Channel.OnNext((EventType.Join, player));
         return new RoomState(player.Id, _owner.Id == player.Id, name, Players, Votes);
+    }
+
+    public void SpectatorState(Guid id, bool isSpectator)
+    {
+        var player = Players.FirstOrDefault(x => x.Id == id);
+
+        if (player is null || _owner?.Id == id)
+            return;
+
+        player.IsSpectator = isSpectator;
+        Channel.OnNext((EventType.PlayerUpdate, player));
     }
 
     public void LeaveRoom(Guid id)
@@ -150,6 +168,9 @@ public record RoomState(
     List<Player> Players,
     List<Vote> Votes);
 
-public sealed record Player(Guid Id, string Name);
+public sealed record Player(Guid Id, string Name)
+{
+    public bool IsSpectator { get; set; }
+}
 
 public sealed record Vote(Guid Voter, uint? Value);

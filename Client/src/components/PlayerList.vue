@@ -35,7 +35,7 @@ const setHost = async (playerId: string) => {
       <div class="grid grid-cols-3 gap-2 items-center">
         <div class="font-bold">Players</div>
 
-        <template v-for="player in props.players">
+        <template v-for="player in props.players.filter(p => !p.isSpectator)">
           <div class="col-start-1">{{ player.name }}</div>
 
           <div v-if="props.reveal">{{ votes[player.id!] || 'Abstained' }}</div>

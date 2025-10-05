@@ -21,6 +21,6 @@ export const joinRoom = (joinCode: string, name: string) => {
   return new EventSource(url)
 }
 
-export const currentPlayer: { name?: string; id?: string } = {}
+export const currentPlayer: { name?: string; id?: string; isSpectator?: boolean } = reactive({})
 
 export const vote = reactive<{ vote: undefined | number }>({ vote: undefined })

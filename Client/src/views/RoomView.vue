@@ -23,7 +23,11 @@ if (props.roomId === '' || !currentPlayer.name) router.replace(`/?joinCode=${pro
 
 const roomConnection = joinRoom(props.roomId, currentPlayer.name!)
 
-if (!roomConnection) router.replace('/')
+roomConnection.onerror = (e) => {
+  toast.error('Failed to connect to room')
+  console.error(e)
+  router.replace('/')
+}
 
 onUnmounted(() => {
   roomConnection.close()
@@ -47,6 +51,7 @@ roomConnection.addEventListener('Init', (event) => {
   room.players = init.players
   room.votes = Object.fromEntries(init.votes.map((vote) => [vote.voter, vote.value]))
   currentPlayer.id = init.playerId
+  currentPlayer.isSpectator = false
 })
 
 roomConnection.addEventListener('Vote', (event) => {
@@ -92,13 +97,28 @@ roomConnection.addEventListener('Reset', (event) => {
   reveal.state = false
 })
 
+roomConnection.addEventListener('PlayerUpdate', (event) => {
+  console.log('player update', event)
+  const player: Player = JSON.parse(event.data)
+
+  room.players = [...room.players.filter((p) => p.id !== player.id), player]
+
+  if (player.id === currentPlayer.id) {
+    currentPlayer.isSpectator = player.isSpectator
+  }
+})
+
 const updateRoom = async (action: 'reveal' | 'reset') => {
   await fetch(`/api/rooms/${props.roomId}/${action}`)
 }
 
 const copyToClipboard = (text: string) => {
   navigator.clipboard.writeText(text)
-  toast("Copied to clipboard")
+  toast('Copied to clipboard')
+}
+
+const setSpectator = async (isSpectator: boolean) => {
+  return fetch(`/api/rooms/${props.roomId}/players/${currentPlayer.id}/${isSpectator ? 'spectate' : 'participate'}`)
 }
 </script>
 
@@ -112,6 +132,16 @@ const copyToClipboard = (text: string) => {
         <CardContent>
           <Button v-if="!reveal.state" variant="outline" @click="updateRoom('reveal')">Reveal Scores</Button>
           <Button v-if="reveal.state" variant="outline" @click="updateRoom('reset')">Next Round</Button>
+        </CardContent>
+      </Card>
+
+      <Card v-else class="w-full">
+        <CardHeader>
+          <CardTitle>Player Options</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Button v-if="!currentPlayer.isSpectator" variant="outline" @click="setSpectator(true)">Spectate</Button>
+          <Button v-if="currentPlayer.isSpectator" variant="outline" @click="setSpectator(false)">Participate</Button>
         </CardContent>
       </Card>
 

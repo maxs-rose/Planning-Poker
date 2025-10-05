@@ -96,7 +96,7 @@ const updateRoom = async (action: 'reveal' | 'reset') => {
 </script>
 
 <template>
-  <div class="p-6 flex flex-row gap-2 items-start justify-center">
+  <div class="p-6 flex flex-col gap-2 items-start justify-center lg:flex-row">
     <div class="flex flex-col items-center justify-center gap-2 w-xl min-w-lg">
       <Card v-if="room.owner" class="w-full">
         <CardHeader>

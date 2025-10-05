@@ -10,9 +10,11 @@ public abstract class BasePlaywriteTest(AspireManager aspireManager) : IClassFix
 
     protected async Task InteractWithPage(Func<IPage, CancellationToken, Task> test, ViewportSize? size = null, CancellationToken ct = default)
     {
+        var ctx = new CancellationTokenSource(TimeSpan.FromMinutes(3)).Token;
+
         var clientUrl = AspireManager.App.GetEndpoint("Client");
 
-        await AspireManager.App.ResourceNotifications.WaitForResourceHealthyAsync("Client", ct);
+        await AspireManager.App.ResourceNotifications.WaitForResourceHealthyAsync("Client", ct).WaitAsync(TimeSpan.FromMinutes(3), ctx);
 
         await using var context = await GetPageContext(clientUrl, size);
         var page = await context.NewPageAsync();

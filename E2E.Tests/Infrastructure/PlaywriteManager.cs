@@ -11,6 +11,7 @@ public sealed class PlaywriteManager : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
+        Assertions.SetDefaultExpectTimeout(10_000);
         _playwright = await Playwright.CreateAsync();
 
         var options = new BrowserTypeLaunchOptions

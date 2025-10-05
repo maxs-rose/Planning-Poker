@@ -157,6 +157,8 @@ internal class Room(string name, string code) : IDisposable
         if (_owner is null)
             return;
 
+        _owner.IsSpectator = false;
+        Channel.OnNext((EventType.PlayerUpdate, _owner));
         Channel.OnNext((EventType.OwnerChange, _owner));
     }
 }

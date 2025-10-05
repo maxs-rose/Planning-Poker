@@ -9,9 +9,14 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { currentPlayer } from '@/lib/room.ts'
 import { useRouter } from 'vue-router'
 
+const joinCode = useRouter().currentRoute.value.query.joinCode
+
 const joinSchema = toTypedSchema(
   z.object({
-    roomId: z.string().min(1, 'Join code is required').default(''),
+    roomId: z
+      .string()
+      .min(1, 'Join code is required')
+      .default(typeof joinCode === 'string' ? joinCode || '' : ''),
     playerName: z.string().min(1, 'Player name is required').default(''),
   }),
 )

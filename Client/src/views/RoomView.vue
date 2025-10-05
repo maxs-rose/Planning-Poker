@@ -19,7 +19,7 @@ const props = defineProps<{
 
 const router = useRouter()
 
-if (props.roomId === '' || !currentPlayer.name) router.replace('/')
+if (props.roomId === '' || !currentPlayer.name) router.replace(`/?joinCode=${props.roomId}`)
 
 const roomConnection = joinRoom(props.roomId, currentPlayer.name!)
 

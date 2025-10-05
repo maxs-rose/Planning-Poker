@@ -13,7 +13,8 @@ public sealed class AspireManager : IAsyncLifetime
     {
         await PlaywriteManager.InitializeAsync();
 
-        var builder = await DistributedApplicationTestingBuilder.CreateAsync<AppHost>();
+        var builder = await DistributedApplicationTestingBuilder.CreateAsync<AppHost>([], static (options, _) => { options.DisableDashboard = false; });
+        builder.Configuration["ASPIRE_ALLOW_UNSECURED_TRANSPORT"] = "true";
 
         App = await builder.BuildAsync();
         await App.StartAsync();

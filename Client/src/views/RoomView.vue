@@ -156,7 +156,7 @@ const setSpectator = async (isSpectator: boolean) => {
         <div class="flex flex-col gap-2">
           <p class="flex gap-3 text-nowrap">
             Join Code:
-            <span class="flex gap-2 items-center cursor-pointer" @click="copyToClipboard(props.roomId)">
+            <span class="flex gap-2 items-center cursor-pointer" data-testid="JoinCode" @click="copyToClipboard(props.roomId)">
               {{ props.roomId }}
               <Icon icon="radix-icons:copy" />
             </span>

@@ -7,6 +7,7 @@ var api = builder.AddProject<Api>("Api")
     .WithEnvironment("Serilog__WriteTo__0__Args__Configure__0__Args__applyThemeToRedirectedOutput", "true");
 
 builder.AddViteApp("Client", Path.Join(builder.AppHostDirectory, "..", "Client"), "pnpm")
-    .WaitFor(api);
+    .WaitFor(api)
+    .WithEnvironment("VITE_BACKEND_API_URL", api.GetEndpoint("http"));
 
 builder.Build().Run();

@@ -60,7 +60,7 @@ const createRoomSubit = createForm.handleSubmit(async (values) => {
       </CardContent>
 
       <CardFooter>
-        <Button class="w-full" type="submit">Create Room</Button>
+        <Button class="w-full" data-testid="CreateRoom" type="submit">Create Room</Button>
       </CardFooter>
     </Card>
   </form>

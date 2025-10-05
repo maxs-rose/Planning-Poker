@@ -15,7 +15,7 @@ const vote = async () => {
 <template>
   <Card
     :class="{ 'border-blue-900': currentVote.vote === props.value }"
-    class="group w-64 h-100 select-none background hover:border-blue-900"
+    class="group w-64 h-100 select-none background hover:border-blue-900 border-8"
     @click="vote"
   >
     <CardContent class="w-full h-full flex items-center justify-center text-6xl group-hover:scale-110">

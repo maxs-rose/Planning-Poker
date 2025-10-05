@@ -21,6 +21,9 @@ const data = Object.values(props.votes)
     {} as Record<number, number>,
   )
 const total = Object.values(data).reduce((acc, x) => acc + x, 0)
+const percentage = Object.entries(data)
+  .map(([k, v]) => ({ k, v: Math.trunc((v / total) * 100) }))
+  .sort((a, b) => b.v - a.v)
 
 const chartData = {
   labels: Object.keys(data),
@@ -45,14 +48,14 @@ const chartOptions: ChartOptions<'pie'> = {
 </script>
 
 <template>
-  <div class="flex flex-row w-full justify-center items-center gap-6">
+  <div class="flex flex-col xl:flex-row w-full justify-center items-center gap-6">
     <div class="grid grid-cols-2 gap-2">
       <div class="font-bold">Score</div>
       <div class="font-bold">Share</div>
 
-      <template v-for="entry in Object.entries(data)">
-        <div class="font-bold">{{ entry[0] }}</div>
-        <div>{{ Math.trunc((entry[1] / total) * 100) }}%</div>
+      <template v-for="entry in percentage">
+        <div class="font-bold">{{ entry.k }}</div>
+        <div>{{ entry.v }}%</div>
       </template>
     </div>
 

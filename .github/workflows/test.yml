@@ -15,6 +15,9 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.0.x
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
       - name: Restore Project
         run: dotnet restore
       - name: Build Project
@@ -22,4 +25,4 @@ jobs:
       - name: Ensure browsers are installed
         run: pwsh E2E.Tests/bin/Debug/net9.0/playwright.ps1 install --with-deps
       - name: Test Project
-        run: dotnet test --no-build
+        run: dotnet test

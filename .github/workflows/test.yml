@@ -15,9 +15,9 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.0.x
-#      - uses: actions/setup-node@v5
-#        with:
-#          node-version: 22
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
       - name: Restore Project
         run: dotnet restore
       - name: Build Project

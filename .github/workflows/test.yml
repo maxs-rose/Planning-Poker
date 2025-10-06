@@ -18,6 +18,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+      - run: npm install -g pnpm
       - name: Restore Project
         run: dotnet restore
       - name: Build Project

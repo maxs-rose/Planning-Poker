@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { currentPlayer, joinRoom, vote } from '@/lib/room.ts'
+import { currentPlayer, joinRoom, roomConnect, vote } from '@/lib/room.ts'
 import { useRouter } from 'vue-router'
 import type { Room } from '@/lib/model/room.interface.ts'
 import { onUnmounted, reactive, ref } from 'vue'
@@ -21,13 +21,7 @@ const router = useRouter()
 
 if (props.roomId === '' || !currentPlayer.name) router.replace(`/?joinCode=${props.roomId}`)
 
-const roomConnection = joinRoom(props.roomId, currentPlayer.name!)
-
-roomConnection.onerror = (e) => {
-  toast.error('Failed to connect to room')
-  console.error(e)
-  router.replace('/')
-}
+const roomConnection = roomConnect(props.roomId, currentPlayer.name!)
 
 onUnmounted(() => {
   roomConnection.close()
@@ -43,15 +37,37 @@ const room = reactive<Room>({
 const reveal = reactive({ state: false })
 const currentState = ref('Voting')
 
-roomConnection.addEventListener('Init', (event) => {
+roomConnection.addEventListener('Init', async (event) => {
   console.log('init event', event)
+  const wasOwner = !!room.owner
+  const wasConnected = !!currentPlayer.id
+
   const init: Room & { playerId: string; votes: Vote[] } = JSON.parse(event.data)
   room.friendlyName = init.friendlyName
-  room.owner = init.owner
-  room.players = init.players
-  room.votes = Object.fromEntries(init.votes.map((vote) => [vote.voter, vote.value]))
   currentPlayer.id = init.playerId
+
+  const joinResponse = await joinRoom(
+    props.roomId,
+    init.playerId,
+    currentPlayer.name!,
+    wasOwner || (wasConnected && room.players.length === 0),
+  )
+  currentPlayer.id = joinResponse.playerId
   currentPlayer.isSpectator = false
+  room.owner = joinResponse.owner
+  room.players = joinResponse.players
+  room.votes = Object.fromEntries(joinResponse.votes.map((vote) => [vote.voter, vote.value]))
+})
+
+roomConnection.addEventListener('Heartbeat', async (event) => {
+  console.log('heartbeat', event)
+
+  const heartbeat: Room & { playerId: string; votes: Vote[] } = JSON.parse(event.data)
+  room.friendlyName = heartbeat.friendlyName
+  currentPlayer.id = heartbeat.playerId
+  room.owner = heartbeat.owner
+  room.players = heartbeat.players
+  room.votes = Object.fromEntries(heartbeat.votes.map((vote) => [vote.voter, vote.value]))
 })
 
 roomConnection.addEventListener('Vote', (event) => {
@@ -69,14 +85,14 @@ roomConnection.addEventListener('OwnerChange', (event) => {
 })
 
 roomConnection.addEventListener('Join', (event) => {
-  console.log('owner change', event)
+  console.log('join', event)
   const player: Player = JSON.parse(event.data)
 
   room.players.push(player)
 })
 
 roomConnection.addEventListener('Leave', (event) => {
-  console.log('owner change', event)
+  console.log('leave', event)
   const player: Player = JSON.parse(event.data)
 
   room.players = room.players.filter((p) => p.id !== player.id)
@@ -156,7 +172,11 @@ const setSpectator = async (isSpectator: boolean) => {
         <div class="flex flex-col gap-2">
           <p class="flex gap-3 text-nowrap">
             Join Code:
-            <span class="flex gap-2 items-center cursor-pointer" data-testid="JoinCode" @click="copyToClipboard(props.roomId)">
+            <span
+              class="flex gap-2 items-center cursor-pointer"
+              data-testid="JoinCode"
+              @click="copyToClipboard(props.roomId)"
+            >
               {{ props.roomId }}
               <Icon icon="radix-icons:copy" />
             </span>

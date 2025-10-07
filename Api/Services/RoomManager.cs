@@ -41,10 +41,6 @@ internal sealed class RoomManager(ILogger<RoomManager> logger) : IDisposable
         Rooms.Remove(code);
         room.Dispose();
     }
-
-    public void ClearOldRooms()
-    {
-    }
 }
 
 [Union]
@@ -106,9 +102,14 @@ internal class Room(string name, string code) : IDisposable
         Channel.OnNext((EventType.Reveal, "reveal"));
     }
 
-    public RoomState JoinRoom(string playerName, bool isSpectator)
+    public RoomState ConnectToRoom()
     {
-        var player = new Player(Guid.NewGuid(), playerName)
+        return new RoomState(Guid.NewGuid(), false, name, Players, Votes, _owner?.Id ?? Guid.Empty);
+    }
+
+    public RoomState JoinRoom(Guid playerId, string playerName, bool isSpectator)
+    {
+        var player = new Player(playerId, playerName)
         {
             IsSpectator = Players.Count != 0 && isSpectator
         };
@@ -117,7 +118,7 @@ internal class Room(string name, string code) : IDisposable
         _owner ??= player;
 
         Channel.OnNext((EventType.Join, player));
-        return new RoomState(player.Id, _owner.Id == player.Id, name, Players, Votes);
+        return new RoomState(player.Id, _owner.Id == player.Id, name, Players, Votes, _owner?.Id ?? Guid.Empty);
     }
 
     public void SpectatorState(Guid id, bool isSpectator)
@@ -161,6 +162,11 @@ internal class Room(string name, string code) : IDisposable
         Channel.OnNext((EventType.PlayerUpdate, _owner));
         Channel.OnNext((EventType.OwnerChange, _owner));
     }
+
+    public RoomState State(Guid playerId)
+    {
+        return new RoomState(playerId, _owner?.Id == playerId, name, Players, Votes, _owner?.Id ?? Guid.Empty);
+    }
 }
 
 public record RoomState(
@@ -168,7 +174,8 @@ public record RoomState(
     bool Owner,
     string FriendlyName,
     List<Player> Players,
-    List<Vote> Votes);
+    List<Vote> Votes,
+    Guid OwnerId);
 
 public sealed record Player(Guid Id, string Name)
 {

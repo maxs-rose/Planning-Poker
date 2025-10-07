@@ -2,46 +2,50 @@ using System.Reactive.Linq;
 using System.Runtime.CompilerServices;
 using Api.Services;
 using FastEndpoints;
-using JetBrains.Annotations;
 
 namespace Api.Endpoints.Room;
 
-internal sealed class RoomEndpoint(RoomManager roomManager) : Endpoint<RoomJoin>
+internal sealed class RoomEndpoint(RoomManager roomManager) : EndpointWithoutRequest
 {
     public override void Configure()
     {
-        Get("/rooms/{Code}/join");
+        Get("/rooms/{Code}");
     }
 
-    public override async Task HandleAsync(RoomJoin req, CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
         var code = Route<string>("Code");
 
         if (string.IsNullOrWhiteSpace(code))
+        {
+            await Send.NotFoundAsync(ct);
             return;
+        }
 
         var room = roomManager.GetRoom(code);
 
         if (room is null)
+        {
+            await Send.NotFoundAsync(ct);
             return;
+        }
 
         ct.Register(() => roomManager.CleanupEmptyRoom(room.Id));
 
-        await Send.EventStreamAsync(Stream(room, req, ct), ct);
+        await Send.EventStreamAsync(Stream(room, ct), ct);
     }
 
     private static async IAsyncEnumerable<StreamItem> Stream(
         Services.Room room,
-        RoomJoin joinRequest,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        var joined = room.JoinRoom(joinRequest.Name, joinRequest.Spectator ?? false);
+        var joined = room.ConnectToRoom();
 
         ct.Register(() => room.LeaveRoom(joined.PlayerId));
 
         yield return ToStreamItem(Services.Room.EventType.Init, joined);
 
-        var heartbeat = Observable.Interval(TimeSpan.FromMinutes(1)).Select(_ => new StreamItem(Guid.NewGuid().ToString(), "Heartbeat", "ping"));
+        var heartbeat = Observable.Interval(TimeSpan.FromSeconds(5)).Select(_ => new StreamItem(Guid.NewGuid().ToString(), "Heartbeat", room.State(joined.PlayerId)));
         var roomData = room.Channel.Select(x => ToStreamItem(x.Item1, x.Item2));
 
         await foreach (var message in heartbeat.Merge(roomData).ToAsyncEnumerable().WithCancellation(ct))
@@ -53,6 +57,3 @@ internal sealed class RoomEndpoint(RoomManager roomManager) : Endpoint<RoomJoin>
         return new StreamItem(Guid.NewGuid().ToString(), type.ToString(), data);
     }
 }
-
-[PublicAPI]
-public sealed record RoomJoin([property: QueryParam] string Name, [property: QueryParam] bool? Spectator = false);

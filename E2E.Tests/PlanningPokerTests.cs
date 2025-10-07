@@ -10,7 +10,7 @@ public sealed class PlanningPokerTests(AspireManager aspireManager) : BasePlaywr
     [Fact]
     public async Task CanCreateRoom()
     {
-        await InteractWithPage(async (page, ct) =>
+        await InteractWithPage(async (page, _) =>
         {
             await page.GotoAsync("/");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);

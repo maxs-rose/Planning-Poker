@@ -24,6 +24,6 @@ jobs:
       - name: Build Project
         run: dotnet build --no-restore
       - name: Ensure browsers are installed
-        run: pwsh E2E.Tests/bin/Debug/net9.0/playwright.ps1 install --with-deps
+        run: pwsh E2E.Tests/bin/Debug/net9.0/playwright.ps1 install --with-deps chromium-headless-shell
       - name: Test Project
         run: dotnet test

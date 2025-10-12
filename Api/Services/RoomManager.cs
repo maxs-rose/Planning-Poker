@@ -15,6 +15,9 @@ internal sealed class RoomManager(ILogger<RoomManager> logger) : IDisposable
 
     public CreateRoom CreateRoom(string name, string code)
     {
+        foreach (var room in Rooms.Keys.ToList())
+            CleanupEmptyRoom(room);
+
         if (Rooms.ContainsKey(code))
             return new CreateRoom.RoomExists();
 
@@ -34,12 +37,18 @@ internal sealed class RoomManager(ILogger<RoomManager> logger) : IDisposable
         if (room.Channel.HasObservers)
         {
             logger.LogDebug("{RoomId} still has members, will not remove", room.Id);
-            return;
         }
-
-        logger.LogInformation("Removing empty room {RoomId}", room.Id);
-        Rooms.Remove(code);
-        room.Dispose();
+        else if (!room.Channel.HasObservers && room.EmptySince is null)
+        {
+            logger.LogInformation("{RoomId} has no members, marking as empty", room.Id);
+            room.EmptySince = DateTime.UtcNow;
+        }
+        else if (room.EmptySince > DateTime.UtcNow.AddMinutes(-10))
+        {
+            logger.LogInformation("Removing empty room {RoomId}", room.Id);
+            Rooms.Remove(code);
+            room.Dispose();
+        }
     }
 }
 
@@ -72,6 +81,7 @@ internal class Room(string name, string code) : IDisposable
     public Subject<(EventType, object)> Channel { get; } = new();
     private List<Vote> Votes { get; } = new();
     private List<Player> Players { get; } = new();
+    public DateTime? EmptySince { get; set; }
 
     public void Dispose()
     {
@@ -104,6 +114,7 @@ internal class Room(string name, string code) : IDisposable
 
     public RoomState ConnectToRoom()
     {
+        EmptySince = null;
         return new RoomState(Guid.NewGuid(), false, name, Players, Votes, _owner?.Id ?? Guid.Empty);
     }
 
@@ -143,6 +154,7 @@ internal class Room(string name, string code) : IDisposable
             return;
 
         Players.Remove(player);
+        Votes.RemoveAll(x => x.Voter == id);
         Channel.OnNext((EventType.Leave, player));
 
         if (Players.Count == 0)

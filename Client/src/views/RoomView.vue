@@ -1,8 +1,16 @@
 <script lang="ts" setup>
-import { currentPlayer, joinRoom, roomConnect, vote } from '@/lib/room.ts'
+import {
+  currentPlayer,
+  currentVote,
+  joinRoom,
+  processRoomState,
+  room,
+  roomConnect,
+  roomExists,
+  vote,
+} from '@/lib/room.ts'
 import { useRouter } from 'vue-router'
-import type { Room } from '@/lib/model/room.interface.ts'
-import { onUnmounted, reactive, ref } from 'vue'
+import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import VotingTable from '@/components/VotingTable.vue'
 import PlayerList from '@/components/PlayerList.vue'
 import type { Vote } from '@/lib/model/vote.interface.ts'
@@ -12,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import VotingResult from '@/components/VotingResult.vue'
 import { Icon } from '@iconify/vue'
 import { toast } from 'vue-sonner'
+import type { Init } from '@/lib/model/init.interface.ts'
 
 const props = defineProps<{
   roomId: string
@@ -21,17 +30,17 @@ const router = useRouter()
 
 if (props.roomId === '' || !currentPlayer.name) router.replace(`/?joinCode=${props.roomId}`)
 
-const roomConnection = roomConnect(props.roomId, currentPlayer.name!)
+const roomConnection = roomConnect(props.roomId)
+
+onMounted(async () => {
+  if (!(await roomExists(props.roomId))) {
+    toast('Room does not exist')
+    await router.replace('/')
+  }
+})
 
 onUnmounted(() => {
   roomConnection.close()
-})
-
-const room = reactive<Room>({
-  friendlyName: '',
-  owner: false,
-  players: [],
-  votes: {},
 })
 
 const reveal = reactive({ state: false })
@@ -39,12 +48,11 @@ const currentState = ref('Voting')
 
 roomConnection.addEventListener('Init', async (event) => {
   console.log('init event', event)
-  const wasOwner = !!room.owner
+  const wasOwner = room.owner
   const wasConnected = !!currentPlayer.id
 
-  const init: Room & { playerId: string; votes: Vote[] } = JSON.parse(event.data)
-  room.friendlyName = init.friendlyName
-  currentPlayer.id = init.playerId
+  const init: Init = JSON.parse(event.data)
+  processRoomState(init)
 
   const joinResponse = await joinRoom(
     props.roomId,
@@ -52,22 +60,17 @@ roomConnection.addEventListener('Init', async (event) => {
     currentPlayer.name!,
     wasOwner || (wasConnected && room.players.length === 0),
   )
-  currentPlayer.id = joinResponse.playerId
-  currentPlayer.isSpectator = false
-  room.owner = joinResponse.owner
-  room.players = joinResponse.players
-  room.votes = Object.fromEntries(joinResponse.votes.map((vote) => [vote.voter, vote.value]))
+  processRoomState(joinResponse)
+  if (wasConnected && currentVote.vote !== undefined) {
+    await vote(currentVote.vote)
+  }
 })
 
 roomConnection.addEventListener('Heartbeat', async (event) => {
   console.log('heartbeat', event)
 
-  const heartbeat: Room & { playerId: string; votes: Vote[] } = JSON.parse(event.data)
-  room.friendlyName = heartbeat.friendlyName
-  currentPlayer.id = heartbeat.playerId
-  room.owner = heartbeat.owner
-  room.players = heartbeat.players
-  room.votes = Object.fromEntries(heartbeat.votes.map((vote) => [vote.voter, vote.value]))
+  const heartbeat: Init = JSON.parse(event.data)
+  processRoomState(heartbeat)
 })
 
 roomConnection.addEventListener('Vote', (event) => {
@@ -102,7 +105,7 @@ roomConnection.addEventListener('Reveal', (event) => {
   console.log('reveal', event)
   currentState.value = 'Revealing'
   reveal.state = true
-  vote.vote = undefined
+  currentVote.vote = undefined
 })
 
 roomConnection.addEventListener('Reset', (event) => {

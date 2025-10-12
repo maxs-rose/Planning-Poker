@@ -1,7 +1,7 @@
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Room } from '@/lib/model/room.interface.ts'
-import type { Vote } from '@/lib/model/vote.interface.ts'
+import type { Init } from '@/lib/model/init.interface.ts'
 
 export const createRoom = async (name: string): Promise<{ joinCode: string }> => {
   const result = await fetch('/api/rooms/create', {
@@ -18,23 +18,23 @@ export const createRoom = async (name: string): Promise<{ joinCode: string }> =>
 }
 
 export const roomExists = async (joinCode: string): Promise<boolean> => {
-  const result = await fetch(`/api/rooms/${joinCode}`, { method: 'HEAD' })
+  try {
+    const result = await fetch(`/api/rooms/${joinCode}`, { method: 'HEAD' })
 
-  return result.status === 404
+    return result.status !== 404
+  } catch {
+    return false
+  }
 }
 
-export const roomConnect = (joinCode: string, name: string) => {
-  const url = new URL(`${window.origin}/api/rooms/${joinCode}`)
+export const roomConnect = (joinCode: string) => {
+  room.id = joinCode
+  const url = new URL(`${window.origin}/api/rooms/${room.id}`)
 
   return new EventSource(url)
 }
 
-export const joinRoom = async (
-  joinCode: string,
-  playerId: string,
-  name: string,
-  owner: boolean,
-): Promise<Room & { playerId: string; votes: Vote[] }> => {
+export const joinRoom = async (joinCode: string, playerId: string, name: string, owner: boolean): Promise<Init> => {
   const result = await fetch(`/api/rooms/${joinCode}/join`, {
     method: 'POST',
     headers: {
@@ -62,5 +62,34 @@ export const joinRoom = async (
 }
 
 export const currentPlayer: { name?: string; id?: string; isSpectator?: boolean } = reactive({})
+export const room: Room & { id: string } = reactive({
+  id: '',
+  friendlyName: '',
+  owner: false,
+  players: [],
+  votes: {},
+})
 
-export const vote = reactive<{ vote: undefined | number }>({ vote: undefined })
+export const processRoomState = (roomState: Init) => {
+  currentPlayer.id = roomState.playerId
+  room.friendlyName = roomState.friendlyName
+  room.owner = roomState.owner
+  room.players = roomState.players
+  room.votes = Object.fromEntries(roomState.votes.map((vote) => [vote.voter, vote.value]))
+}
+
+export const currentVote = reactive<{ vote: undefined | number }>({ vote: undefined })
+
+export const vote = async (value: number) => {
+  await fetch(`/api/rooms/${room.id}/players/${currentPlayer.id}/vote`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      value,
+    }),
+  })
+
+  currentVote.vote = value
+}

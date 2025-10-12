@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { Card, CardContent } from '@/components/ui/card'
-import { vote as currentVote } from '@/lib/room.ts'
+import { currentVote } from '@/lib/room.ts'
 
 const props = defineProps<{
   value: number

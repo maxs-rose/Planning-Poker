@@ -122,6 +122,10 @@ roomConnection.addEventListener('PlayerUpdate', (event) => {
 
   room.players = [...room.players.filter((p) => p.id !== player.id), player]
 
+  if (player.isOwner) {
+    room.owner = false
+  }
+
   if (player.id === currentPlayer.id) {
     currentPlayer.isSpectator = player.isSpectator
   }

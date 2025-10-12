@@ -126,7 +126,8 @@ internal class Room(string name, string code) : IDisposable
         };
         Players.Add(player);
 
-        _owner ??= player;
+        if (_owner is null)
+            SetOwner(playerId);
 
         Channel.OnNext((EventType.Join, player));
         return new RoomState(player.Id, _owner.Id == player.Id, name, Players, Votes, _owner?.Id ?? Guid.Empty);
@@ -170,7 +171,10 @@ internal class Room(string name, string code) : IDisposable
         if (_owner is null)
             return;
 
+        Players.ForEach(p => p.IsOwner = false);
+
         _owner.IsSpectator = false;
+        _owner.IsOwner = true;
         Channel.OnNext((EventType.PlayerUpdate, _owner));
         Channel.OnNext((EventType.OwnerChange, _owner));
     }
@@ -192,6 +196,7 @@ public record RoomState(
 public sealed record Player(Guid Id, string Name)
 {
     public bool IsSpectator { get; set; }
+    public bool IsOwner { get; set; }
 }
 
 public sealed record Vote(Guid Voter, uint? Value);

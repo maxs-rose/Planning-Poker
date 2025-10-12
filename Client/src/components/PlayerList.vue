@@ -3,7 +3,7 @@ import type { Player } from '@/lib/model/player.interface.ts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Icon } from '@iconify/vue'
 import { Button } from '@/components/ui/button'
-import { currentPlayer } from '@/lib/room.ts'
+import { currentPlayer, room } from '@/lib/room.ts'
 
 const props = defineProps<{
   players: Player[]
@@ -14,6 +14,7 @@ const props = defineProps<{
 }>()
 
 const setHost = async (playerId: string) => {
+  room.owner = false
   return fetch(`/api/rooms/${props.roomId}/set-host`, {
     method: 'POST',
     headers: {
@@ -36,7 +37,10 @@ const setHost = async (playerId: string) => {
         <div class="font-bold">Players</div>
 
         <template v-for="player in props.players.filter((p) => !p.isSpectator)">
-          <div class="col-start-1" data-testid="PlayerNames">{{ player.name }}</div>
+          <div :class="{ 'font-bold': currentPlayer.id === player.id }" class="col-start-1 relative" data-testid="PlayerNames">
+            <Icon v-if="player.isOwner" class="absolute -left-6 top-1.5" icon="radix-icons:sketch-logo" />
+            {{ player.name }}
+          </div>
 
           <div v-if="props.reveal">{{ votes[player.id!] || 'Abstained' }}</div>
           <div v-else>

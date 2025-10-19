@@ -1,3 +1,4 @@
+using Api.Models;
 using Api.Services;
 using FastEndpoints;
 using JetBrains.Annotations;

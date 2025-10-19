@@ -35,13 +35,11 @@ internal sealed class RoomEndpoint(RoomManager roomManager) : EndpointWithoutReq
             ? Guid.NewGuid() 
             : parsedId;
 
-        ct.Register(() => roomManager.CleanupEmptyRoom(room.Id));
-
         await Send.EventStreamAsync(Stream(room, playerId, ct), ct);
     }
 
     private static async IAsyncEnumerable<StreamItem> Stream(
-        Services.Room room,
+        Models.Room room,
         Guid playerId,
         [EnumeratorCancellation] CancellationToken ct)
     {
@@ -52,7 +50,7 @@ internal sealed class RoomEndpoint(RoomManager roomManager) : EndpointWithoutReq
 
         ct.Register(() => room.LeaveRoom(joined.PlayerId));
 
-        yield return ToStreamItem(Services.Room.EventType.Init, joined);
+        yield return ToStreamItem(Models.Room.EventType.Init, joined);
 
         var heartbeat = Observable.Interval(TimeSpan.FromSeconds(5)).Select(_ =>
             new StreamItem(Guid.NewGuid().ToString(), "Heartbeat", room.State(joined.PlayerId)));
@@ -62,7 +60,7 @@ internal sealed class RoomEndpoint(RoomManager roomManager) : EndpointWithoutReq
             yield return message;
     }
 
-    private static StreamItem ToStreamItem(Services.Room.EventType type, object? data)
+    private static StreamItem ToStreamItem(Models.Room.EventType type, object? data)
     {
         return new StreamItem(Guid.NewGuid().ToString(), type.ToString(), data);
     }

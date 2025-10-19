@@ -8,6 +8,7 @@ import {
   roomConnect,
   roomExists,
   vote,
+  clearPlayerData,
 } from '@/lib/room.ts'
 import { useRouter } from 'vue-router'
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
@@ -28,13 +29,16 @@ const props = defineProps<{
 
 const router = useRouter()
 
-if (props.roomId === '' || !currentPlayer.name) router.replace(`/?joinCode=${props.roomId}`)
+if (!currentPlayer.name) {
+  router.replace(`/?joinCode=${props.roomId}`)
+}
 
 const roomConnection = roomConnect(props.roomId)
 
 onMounted(async () => {
   if (!(await roomExists(props.roomId))) {
     toast('Room does not exist')
+    clearPlayerData()
     await router.replace('/')
   }
 })
@@ -54,15 +58,20 @@ roomConnection.addEventListener('Init', async (event) => {
   const init: Init = JSON.parse(event.data)
   processRoomState(init)
 
-  const joinResponse = await joinRoom(
-    props.roomId,
-    init.playerId,
-    currentPlayer.name!,
-    wasOwner || (wasConnected && room.players.length === 0),
-  )
-  processRoomState(joinResponse)
-  if (wasConnected && currentVote.vote !== undefined) {
-    await vote(currentVote.vote)
+  try {
+    const joinResponse = await joinRoom(
+      props.roomId,
+      init.playerId,
+      currentPlayer.name!,
+      wasOwner || (wasConnected && room.players.length === 0),
+    )
+    processRoomState(joinResponse)
+    if (wasConnected && currentVote.vote !== undefined) {
+      await vote(currentVote.vote)
+    }
+  } catch (error) {
+    console.error('Failed to join room:', error)
+    toast.error('Failed to join room. Please try again.')
   }
 })
 
@@ -91,7 +100,13 @@ roomConnection.addEventListener('Join', (event) => {
   console.log('join', event)
   const player: Player = JSON.parse(event.data)
 
-  room.players.push(player)
+  const existingPlayerIndex = room.players.findIndex((p) => p.id === player.id)
+
+  if (existingPlayerIndex !== -1) {
+    room.players[existingPlayerIndex] = player
+  } else {
+    room.players.push(player)
+  }
 })
 
 roomConnection.addEventListener('Leave', (event) => {
@@ -135,13 +150,27 @@ const updateRoom = async (action: 'reveal' | 'reset') => {
   await fetch(`/api/rooms/${props.roomId}/${action}`)
 }
 
+const hasVotes = () => {
+  return Object.keys(room.votes).length > 0
+}
+
 const copyToClipboard = (text: string) => {
-  navigator.clipboard.writeText(text)
+  const host = window.location.host
+  const protocol = window.location.protocol
+  const fullUrl = `${protocol}//${host}/${text}`
+
+  navigator.clipboard.writeText(fullUrl)
   toast('Copied to clipboard')
 }
 
 const setSpectator = async (isSpectator: boolean) => {
   return fetch(`/api/rooms/${props.roomId}/players/${currentPlayer.id}/${isSpectator ? 'spectate' : 'participate'}`)
+}
+
+const leaveRoom = async () => {
+  roomConnection.close()
+  clearPlayerData()
+  await router.push('/')
 }
 </script>
 
@@ -152,9 +181,17 @@ const setSpectator = async (isSpectator: boolean) => {
         <CardHeader>
           <CardTitle>Host Tools</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Button v-if="!reveal.state" variant="outline" @click="updateRoom('reveal')">Reveal Scores</Button>
+        <CardContent class="flex flex-col gap-2">
+          <Button v-if="!reveal.state" variant="outline" :disabled="!hasVotes()" @click="updateRoom('reveal')">
+            Reveal Scores
+            {{
+              !hasVotes()
+                ? ' (Nobody has voted yet)'
+                : `(${Object.keys(room.votes).length}/${room.players.length} votes)`
+            }}
+          </Button>
           <Button v-if="reveal.state" variant="outline" @click="updateRoom('reset')">Next Round</Button>
+          <Button variant="destructive" @click="leaveRoom">Leave Room</Button>
         </CardContent>
       </Card>
 
@@ -162,9 +199,10 @@ const setSpectator = async (isSpectator: boolean) => {
         <CardHeader>
           <CardTitle>Player Options</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent class="flex flex-col gap-2">
           <Button v-if="!currentPlayer.isSpectator" variant="outline" @click="setSpectator(true)">Spectate</Button>
           <Button v-if="currentPlayer.isSpectator" variant="outline" @click="setSpectator(false)">Participate</Button>
+          <Button variant="destructive" @click="leaveRoom">Leave Room</Button>
         </CardContent>
       </Card>
 

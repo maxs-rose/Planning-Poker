@@ -22,7 +22,6 @@ const createForm = useForm({ validationSchema: createSchema })
 const createRoomSubit = createForm.handleSubmit(async (values) => {
   const room = await createRoom(values.roomName)
   currentPlayer.name = values.playerName
-  currentPlayer.id = undefined
 
   console.log('Room creation result', room)
   await router.push(`/${room.joinCode}`)
@@ -65,5 +64,3 @@ const createRoomSubit = createForm.handleSubmit(async (values) => {
     </Card>
   </form>
 </template>
-
-<style scoped></style>

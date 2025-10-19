@@ -26,7 +26,6 @@ const joinForm = useForm({ validationSchema: joinSchema })
 
 const joinRoomSubmit = joinForm.handleSubmit(async (values) => {
   currentPlayer.name = values.playerName
-  currentPlayer.id = undefined
 
   await router.push(`/${values.roomId}`)
 })

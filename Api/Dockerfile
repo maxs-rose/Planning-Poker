@@ -6,6 +6,9 @@ EXPOSE 8081
 
 FROM node:lts AS node
 
+ARG VERSION=Unknown
+
+ENV VITE_APP_VERSION=$VERSION
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable

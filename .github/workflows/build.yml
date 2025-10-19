@@ -18,6 +18,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set short SHA from git commit
+        shell: bash
+        run: echo "SHORT_SHA=`echo ${{ github.sha }} | cut -c1-8`" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -29,3 +32,5 @@ jobs:
           file: ./Api/Dockerfile
           context: .
           tags: ghcr.io/maxs-rose/planning-poker:latest
+          build-args: |
+            VERSION=${{ env.SHORT_SHA }}    

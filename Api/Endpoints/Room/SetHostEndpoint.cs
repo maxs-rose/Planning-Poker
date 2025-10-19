@@ -16,7 +16,7 @@ internal sealed class SetHostEndpoint(RoomManager roomManager) : Endpoint<SetHos
     {
         var room = roomManager.GetRoom(Route<string>("Code")!)!;
 
-        room.SetOwner(req.User);
+        room.TransferOwnershipPermanently(req.User);
 
         return Task.FromResult(TypedResults.Ok());
     }

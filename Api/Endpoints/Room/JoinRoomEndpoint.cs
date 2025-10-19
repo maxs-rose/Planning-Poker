@@ -23,20 +23,28 @@ internal sealed class JoinRoomEndpoint(RoomManager roomManager) : Endpoint<JoinR
 
         var room = roomManager.GetRoom(code);
 
-        if (room is null)
+        if (room is null || room.IsDisposed)
         {
             await Send.NotFoundAsync(ct);
             return;
         }
 
-        var state = room.JoinRoom(req.Id, req.Name, req.Spectator);
-        if (req.Owner)
+        try
         {
-            room.SetOwner(req.Id);
-            state = state with { Owner = true };
-        }
+            var state = room.JoinRoom(req.Id, req.Name, req.Spectator);
+            if (req.Owner)
+            {
+                room.SetOwner(req.Id);
+                state = state with { Owner = true };
+            }
 
-        await Send.OkAsync(state, ct);
+            await Send.OkAsync(state, ct);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Room was disposed while trying to join
+            await Send.NotFoundAsync(ct);
+        }
     }
 }
 

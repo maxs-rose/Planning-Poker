@@ -34,6 +34,14 @@ internal sealed class RoomManager(ILogger<RoomManager> logger) : IDisposable
         if (!Rooms.TryGetValue(code, out var room))
             return;
 
+        if (room.IsDisposed)
+        {
+            Rooms.Remove(code);
+            return;
+        }
+
+        room.CleanupDisconnectedPlayers();
+
         if (room.Channel.HasObservers)
         {
             logger.LogDebug("{RoomId} still has members, will not remove", room.Id);
@@ -43,9 +51,9 @@ internal sealed class RoomManager(ILogger<RoomManager> logger) : IDisposable
             logger.LogInformation("{RoomId} has no members, marking as empty", room.Id);
             room.EmptySince = DateTime.UtcNow;
         }
-        else if (room.EmptySince > DateTime.UtcNow.AddMinutes(-10))
+        else if (room.EmptySince.HasValue && room.EmptySince.Value < DateTime.UtcNow.AddMinutes(-30))
         {
-            logger.LogInformation("Removing empty room {RoomId}", room.Id);
+            logger.LogInformation("Removing empty room {RoomId} that has been empty since {EmptySince}", room.Id, room.EmptySince);
             Rooms.Remove(code);
             room.Dispose();
         }
@@ -75,23 +83,32 @@ internal class Room(string name, string code) : IDisposable
     }
 
     private Player? _owner;
+    private Guid? _originalOwnerId;
+    private string? _originalOwnerName;
+    private bool _isDisposed;
 
     public string Id { get; } = code;
 
     public Subject<(EventType, object)> Channel { get; } = new();
     private List<Vote> Votes { get; } = new();
     private List<Player> Players { get; } = new();
+    private Dictionary<Guid, DateTime> DisconnectedPlayers { get; } = new();
     public DateTime? EmptySince { get; set; }
+    public bool IsDisposed => _isDisposed;
 
     public void Dispose()
     {
+        if (_isDisposed)
+            return;
+
+        _isDisposed = true;
         Channel.OnCompleted();
         Channel.Dispose();
     }
 
     public void Vote(uint? value, Guid playerId)
     {
-        if (Players.FirstOrDefault(p => p.Id == playerId) is not { IsSpectator: false })
+        if (_isDisposed || Players.FirstOrDefault(p => p.Id == playerId) is not { IsSpectator: false })
             return;
 
         if (Votes.FirstOrDefault(v => v.Voter == playerId) is not null)
@@ -103,38 +120,85 @@ internal class Room(string name, string code) : IDisposable
 
     public void Reset()
     {
+        if (_isDisposed)
+            return;
+
         Votes.Clear();
         Channel.OnNext((EventType.Reset, "reset"));
     }
 
     public void Reveal()
     {
+        if (_isDisposed)
+            return;
+
         Channel.OnNext((EventType.Reveal, "reveal"));
     }
 
-    public RoomState ConnectToRoom()
+    public bool HasVotes()
+    {
+        return Votes.Count > 0;
+    }
+
+    public RoomState ConnectToRoom(Guid playerId)
     {
         EmptySince = null;
-        return new RoomState(Guid.NewGuid(), false, name, Players, Votes, _owner?.Id ?? Guid.Empty);
+        return new RoomState(playerId, false, name, Players, Votes, _owner?.Id ?? Guid.Empty);
     }
 
     public RoomState JoinRoom(Guid playerId, string playerName, bool isSpectator)
     {
+        if (_isDisposed)
+            throw new ObjectDisposedException(nameof(Room), "Cannot join a disposed room");
+
+        var existingPlayer = Players.FirstOrDefault(p => p.Id == playerId);
+        if (existingPlayer is not null)
+        {
+            DisconnectedPlayers.Remove(playerId);
+            return new RoomState(existingPlayer.Id, _owner?.Id == existingPlayer.Id, name, Players, Votes, _owner?.Id ?? Guid.Empty);
+        }
+
+        bool isReconnectingOwner = false;
+        if (DisconnectedPlayers.ContainsKey(playerId) && _owner?.Id == playerId)
+        {
+            isReconnectingOwner = true;
+        }
+        else if (_originalOwnerId.HasValue && 
+                 _originalOwnerName == playerName && 
+                 _owner == null &&
+                 Players.All(p => p.Id != _originalOwnerId))
+        {
+            isReconnectingOwner = true;
+        }
+
         var player = new Player(playerId, playerName)
         {
-            IsSpectator = Players.Count != 0 && isSpectator
+            IsSpectator = Players.Count != 0 && isSpectator && !isReconnectingOwner
         };
         Players.Add(player);
 
-        if (_owner is null)
+        if (_owner is null || isReconnectingOwner)
+        {
             SetOwner(playerId);
+            
+            if (_originalOwnerId is null)
+            {
+                _originalOwnerId = playerId;
+                _originalOwnerName = playerName;
+            }
+        }
 
+        DisconnectedPlayers.Remove(playerId);
         Channel.OnNext((EventType.Join, player));
-        return new RoomState(player.Id, _owner.Id == player.Id, name, Players, Votes, _owner?.Id ?? Guid.Empty);
+        
+        return new RoomState(player.Id, _owner?.Id == player.Id, name, Players, Votes, _owner?.Id ?? Guid.Empty);
     }
 
     public void SpectatorState(Guid id, bool isSpectator)
     {
+        if (_isDisposed)
+            return;
+
         var player = Players.FirstOrDefault(x => x.Id == id);
 
         if (player is null || _owner?.Id == id)
@@ -146,9 +210,6 @@ internal class Room(string name, string code) : IDisposable
 
     public void LeaveRoom(Guid id)
     {
-        if (id == _owner?.Id)
-            _owner = null;
-
         var player = Players.FirstOrDefault(x => x.Id == id);
 
         if (player is null)
@@ -156,20 +217,63 @@ internal class Room(string name, string code) : IDisposable
 
         Players.Remove(player);
         Votes.RemoveAll(x => x.Voter == id);
-        Channel.OnNext((EventType.Leave, player));
+        
+        if (!_isDisposed)
+            Channel.OnNext((EventType.Leave, player));
 
-        if (Players.Count == 0)
+        if (id == _owner?.Id)
+        {
+            DisconnectedPlayers[id] = DateTime.UtcNow;
+            return;
+        }
+
+        DisconnectedPlayers.Remove(id);
+    }
+
+    public void CleanupDisconnectedPlayers()
+    {
+        if (_isDisposed)
             return;
 
-        SetOwner(Players[0].Id);
+        var timeout = DateTime.UtcNow.AddMinutes(-30);
+        
+        var timedOutPlayers = DisconnectedPlayers
+            .Where(kvp => kvp.Value < timeout)
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        foreach (var playerId in timedOutPlayers)
+        {
+            DisconnectedPlayers.Remove(playerId);
+
+            if (_owner?.Id == playerId)
+            {
+                _owner = null;
+
+                if (Players.Count > 0)
+                {
+                    var newOwner = Players.FirstOrDefault(p => !p.IsSpectator) ?? Players[0];
+                    SetOwner(newOwner.Id);
+                }
+            }
+        }
     }
 
     public void SetOwner(Guid player)
     {
+        if (_isDisposed)
+            return;
+
         _owner = Players.FirstOrDefault(p => p.Id == player);
 
         if (_owner is null)
             return;
+
+        if (_originalOwnerId is null)
+        {
+            _originalOwnerId = player;
+            _originalOwnerName = _owner.Name;
+        }
 
         Players.ForEach(p => p.IsOwner = false);
 
@@ -177,6 +281,17 @@ internal class Room(string name, string code) : IDisposable
         _owner.IsOwner = true;
         Channel.OnNext((EventType.PlayerUpdate, _owner));
         Channel.OnNext((EventType.OwnerChange, _owner));
+    }
+
+    public void TransferOwnershipPermanently(Guid newOwnerId)
+    {
+        SetOwner(newOwnerId);
+        
+        if (_owner is not null)
+        {
+            _originalOwnerId = newOwnerId;
+            _originalOwnerName = _owner.Name;
+        }
     }
 
     public RoomState State(Guid playerId)

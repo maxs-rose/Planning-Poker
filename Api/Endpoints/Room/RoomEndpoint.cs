@@ -24,28 +24,38 @@ internal sealed class RoomEndpoint(RoomManager roomManager) : EndpointWithoutReq
 
         var room = roomManager.GetRoom(code);
 
-        if (room is null)
+        if (room is null || room.IsDisposed)
         {
             await Send.NotFoundAsync(ct);
             return;
         }
 
+        var playerIdParam = Query<string?>("playerId", isRequired: false);
+        var playerId = string.IsNullOrEmpty(playerIdParam) || !Guid.TryParse(playerIdParam, out var parsedId) 
+            ? Guid.NewGuid() 
+            : parsedId;
+
         ct.Register(() => roomManager.CleanupEmptyRoom(room.Id));
 
-        await Send.EventStreamAsync(Stream(room, ct), ct);
+        await Send.EventStreamAsync(Stream(room, playerId, ct), ct);
     }
 
     private static async IAsyncEnumerable<StreamItem> Stream(
         Services.Room room,
+        Guid playerId,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        var joined = room.ConnectToRoom();
+        if (room.IsDisposed)
+            yield break;
+
+        var joined = room.ConnectToRoom(playerId);
 
         ct.Register(() => room.LeaveRoom(joined.PlayerId));
 
         yield return ToStreamItem(Services.Room.EventType.Init, joined);
 
-        var heartbeat = Observable.Interval(TimeSpan.FromSeconds(5)).Select(_ => new StreamItem(Guid.NewGuid().ToString(), "Heartbeat", room.State(joined.PlayerId)));
+        var heartbeat = Observable.Interval(TimeSpan.FromSeconds(5)).Select(_ =>
+            new StreamItem(Guid.NewGuid().ToString(), "Heartbeat", room.State(joined.PlayerId)));
         var roomData = room.Channel.Select(x => ToStreamItem(x.Item1, x.Item2));
 
         await foreach (var message in heartbeat.Merge(roomData).ToAsyncEnumerable().WithCancellation(ct))

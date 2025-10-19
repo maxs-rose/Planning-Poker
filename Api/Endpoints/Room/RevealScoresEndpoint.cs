@@ -13,14 +13,24 @@ internal sealed class RevealScoresEndpoint(
         Get("/rooms/{Code}/reveal");
     }
 
-    public override Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
-        var room = roomManager.GetRoom(Route<string>("Code")!)!;
+        var room = roomManager.GetRoom(Route<string>("Code")!);
 
-        logger.LogInformation("subscrubers {Subs}", room.Channel.HasObservers);
+        if (room is null || room.IsDisposed)
+        {
+            await Send.NotFoundAsync(ct);
+            return;
+        }
+
+        if (!room.HasVotes())
+        {
+            logger.LogWarning("Cannot reveal scores - no votes have been cast yet");
+            ThrowError("No votes have been cast yet", 400);
+        }
+
+        logger.LogInformation("Revealing scores for room with {Subs} subscribers", room.Channel.HasObservers);
 
         room.Reveal();
-
-        return Task.CompletedTask;
     }
 }

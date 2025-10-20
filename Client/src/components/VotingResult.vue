@@ -8,8 +8,8 @@ ChartJS.register(ArcElement, Tooltip, Colors, ChartDataLabels)
 
 const HUE_BASE = 200
 const SATURATION = 65
-const LIGHTNESS_MIN = 15
-const LIGHTNESS_MAX = 50
+const LIGHTNESS_MIN = 30
+const LIGHTNESS_MAX = 60
 
 const props = defineProps<{
   players: Player[]
@@ -60,7 +60,7 @@ const colors = sortedEntries.map(([, count]) => {
   const match = baseColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/)
 
   if (match) {
-    const [h, s, l] = match
+    const [, h, s, l] = match
     const newLightness = Math.max(parseInt(l) - darkenAmount, 5)
     return `hsl(${h}, ${s}%, ${newLightness}%)`
   }

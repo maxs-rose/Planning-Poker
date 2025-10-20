@@ -1,5 +1,4 @@
 import { reactive, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import type { Room } from '@/lib/model/room.interface.ts'
 import type { Init } from '@/lib/model/init.interface.ts'
 
@@ -44,6 +43,7 @@ export const room: Room & { id: string } = reactive({
   owner: false,
   players: [],
   votes: {},
+  revealed: false,
 })
 
 export const createRoom = async (name: string): Promise<{ joinCode: string }> => {
@@ -102,7 +102,6 @@ export const joinRoom = async (joinCode: string, playerId: string, name: string,
   })
 
   if (result.status === 404) {
-    clearPlayerData()
     throw new Error('Room not found')
   }
 
@@ -118,7 +117,15 @@ export const processRoomState = (roomState: Init) => {
   room.friendlyName = roomState.friendlyName
   room.owner = roomState.owner
   room.players = roomState.players
-  room.votes = Object.fromEntries(roomState.votes.map((vote) => [vote.voter, vote.value]))
+
+  room.votes = Object.fromEntries(
+    roomState.votes.filter((vote) => vote.value !== null).map((vote) => [vote.voter, vote.value]),
+  )
+  room.revealed = roomState.revealed
+
+  if (currentPlayer.id && room.votes[currentPlayer.id] !== undefined && room.votes[currentPlayer.id] !== null) {
+    currentVote.vote = room.votes[currentPlayer.id]
+  }
 }
 
 export const currentVote = reactive<{ vote: undefined | number }>({ vote: undefined })

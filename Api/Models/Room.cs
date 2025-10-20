@@ -43,6 +43,7 @@ internal class Room : IDisposable
     private Dictionary<Guid, DateTime> DisconnectedPlayers { get; } = new();
     public DateTime? EmptySince { get; set; }
     public bool IsDisposed { get; private set; }
+    private bool Revealed { get; set; }
 
     public void Dispose()
     {
@@ -73,6 +74,7 @@ internal class Room : IDisposable
             return;
 
         Votes.Clear();
+        Revealed = false;
         Channel.OnNext((EventType.Reset, "reset"));
     }
 
@@ -81,6 +83,7 @@ internal class Room : IDisposable
         if (IsDisposed)
             return;
 
+        Revealed = true;
         Channel.OnNext((EventType.Reveal, "reveal"));
     }
 
@@ -92,7 +95,14 @@ internal class Room : IDisposable
     public RoomState ConnectToRoom(Guid playerId)
     {
         EmptySince = null;
-        return new RoomState(playerId, false, _name, Players, Votes, _owner?.Id ?? Guid.Empty);
+        
+        var existingPlayer = Players.FirstOrDefault(p => p.Id == playerId);
+        if (existingPlayer is not null)
+        {
+            return new RoomState(existingPlayer.Id, _owner?.Id == existingPlayer.Id, _name, Players, Votes, _owner?.Id ?? Guid.Empty, Revealed);
+        }
+        
+        return new RoomState(playerId, false, _name, Players, Votes, _owner?.Id ?? Guid.Empty, Revealed);
     }
 
     public RoomState JoinRoom(Guid playerId, string playerName, bool isSpectator)
@@ -103,7 +113,18 @@ internal class Room : IDisposable
         if (IsExistingPlayer(playerId, out var existingPlayer))
         {
             DisconnectedPlayers.Remove(playerId);
-            return new RoomState(existingPlayer.Id, _owner?.Id == existingPlayer.Id, _name, Players, Votes, _owner?.Id ?? Guid.Empty);
+            existingPlayer.IsConnected = true;
+            Channel.OnNext((EventType.PlayerUpdate, existingPlayer));
+            return new RoomState(existingPlayer.Id, _owner?.Id == existingPlayer.Id, _name, Players, Votes, _owner?.Id ?? Guid.Empty, Revealed);
+        }
+
+        var reconnectingPlayer = Players.FirstOrDefault(p => p.Name == playerName);
+        if (reconnectingPlayer is not null)
+        {
+            DisconnectedPlayers.Remove(reconnectingPlayer.Id);
+            reconnectingPlayer.IsConnected = true;
+            Channel.OnNext((EventType.PlayerUpdate, reconnectingPlayer));
+            return new RoomState(reconnectingPlayer.Id, _owner?.Id == reconnectingPlayer.Id, _name, Players, Votes, _owner?.Id ?? Guid.Empty, Revealed);
         }
 
         var isReconnectingOwner = IsReconnectingOwner(playerId, playerName);
@@ -128,7 +149,7 @@ internal class Room : IDisposable
         DisconnectedPlayers.Remove(playerId);
         Channel.OnNext((EventType.Join, player));
 
-        return new RoomState(player.Id, _owner?.Id == player.Id, _name, Players, Votes, _owner?.Id ?? Guid.Empty);
+        return new RoomState(player.Id, _owner?.Id == player.Id, _name, Players, Votes, _owner?.Id ?? Guid.Empty, Revealed);
     }
 
     public void SpectatorState(Guid id, bool isSpectator)
@@ -152,8 +173,25 @@ internal class Room : IDisposable
         if (player is null)
             return;
 
+        if (IsDisposed)
+            return;
+
+        player.IsConnected = false;
+        Channel.OnNext((EventType.PlayerUpdate, player));
+
+        DisconnectedPlayers[id] = DateTime.UtcNow;
+    }
+
+    public void ExplicitLeaveRoom(Guid id)
+    {
+        var player = Players.FirstOrDefault(x => x.Id == id);
+
+        if (player is null)
+            return;
+
         Players.Remove(player);
         Votes.RemoveAll(x => x.Voter == id);
+        DisconnectedPlayers.Remove(id);
 
         if (IsDisposed)
             return;
@@ -162,11 +200,8 @@ internal class Room : IDisposable
 
         if (id == _owner?.Id)
         {
-            DisconnectedPlayers[id] = DateTime.UtcNow;
-            return;
+            _owner = null;
         }
-
-        DisconnectedPlayers.Remove(id);
     }
 
     public void SetOwner(Guid player, bool permanent = false)
@@ -195,7 +230,7 @@ internal class Room : IDisposable
 
     public RoomState State(Guid playerId)
     {
-        return new RoomState(playerId, _owner?.Id == playerId, _name, Players, Votes, _owner?.Id ?? Guid.Empty);
+        return new RoomState(playerId, _owner?.Id == playerId, _name, Players, Votes, _owner?.Id ?? Guid.Empty, Revealed);
     }
 
     private bool IsExistingPlayer(Guid playerId, out Player player)
@@ -224,6 +259,13 @@ internal class Room : IDisposable
         foreach (var playerId in timedOutPlayers)
         {
             DisconnectedPlayers.Remove(playerId);
+            
+            var player = Players.FirstOrDefault(p => p.Id == playerId);
+            if (player is not null)
+            {
+                Players.Remove(player);
+                Votes.RemoveAll(x => x.Voter == playerId);
+            }
 
             if (_owner?.Id != playerId)
                 continue;

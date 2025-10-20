@@ -5,4 +5,5 @@ export interface Room {
   owner: boolean
   players: Player[]
   votes: Record<string, number>
+  revealed: boolean
 }

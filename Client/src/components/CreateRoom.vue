@@ -37,7 +37,7 @@ const createRoomSubit = createForm.handleSubmit(async (values) => {
 
       <CardContent>
         <FormField v-slot="{ componentField }" name="roomName">
-          <FormItem class="w-full">
+          <FormItem class="w-full mb-4">
             <FormLabel>Room Name</FormLabel>
             <FormControl>
               <Input placeholder="The Inventory" type="text" v-bind="componentField" />

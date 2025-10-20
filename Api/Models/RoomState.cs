@@ -6,4 +6,5 @@ public record RoomState(
     string FriendlyName,
     List<Player> Players,
     List<Vote> Votes,
-    Guid OwnerId);
+    Guid OwnerId,
+    bool Revealed);

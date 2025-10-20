@@ -3,4 +3,5 @@ export interface Player {
   name: string
   isSpectator: boolean
   isOwner: boolean
+  isConnected: boolean
 }

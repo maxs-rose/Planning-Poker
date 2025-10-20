@@ -39,7 +39,7 @@ const joinRoomSubmit = joinForm.handleSubmit(async (values) => {
       </CardHeader>
       <CardContent>
         <FormField v-slot="{ componentField }" name="roomId">
-          <FormItem class="w-full">
+          <FormItem class="w-full mb-4">
             <FormLabel>Join Code</FormLabel>
             <FormControl>
               <Input placeholder="quantify-roadster-southchesley" type="text" v-bind="componentField" />

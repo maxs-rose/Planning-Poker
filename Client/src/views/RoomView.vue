@@ -58,6 +58,9 @@ roomConnection.addEventListener('Init', async (event) => {
   const init: Init = JSON.parse(event.data)
   processRoomState(init)
 
+  reveal.state = init.revealed
+  currentState.value = init.revealed ? 'Revealing' : 'Voting'
+
   try {
     const joinResponse = await joinRoom(
       props.roomId,
@@ -66,12 +69,23 @@ roomConnection.addEventListener('Init', async (event) => {
       wasOwner || (wasConnected && room.players.length === 0),
     )
     processRoomState(joinResponse)
-    if (wasConnected && currentVote.vote !== undefined) {
+
+    reveal.state = joinResponse.revealed
+    currentState.value = joinResponse.revealed ? 'Revealing' : 'Voting'
+
+    if (
+      wasConnected &&
+      currentVote.vote !== undefined &&
+      !joinResponse.revealed &&
+      (!currentPlayer.id || room.votes[currentPlayer.id] === undefined)
+    ) {
       await vote(currentVote.vote)
     }
   } catch (error) {
     console.error('Failed to join room:', error)
-    toast.error('Failed to join room. Please try again.')
+    toast.error('Failed to join room. Redirecting...')
+    clearPlayerData()
+    await router.replace('/')
   }
 })
 
@@ -80,6 +94,9 @@ roomConnection.addEventListener('Heartbeat', async (event) => {
 
   const heartbeat: Init = JSON.parse(event.data)
   processRoomState(heartbeat)
+
+  reveal.state = heartbeat.revealed
+  currentState.value = heartbeat.revealed ? 'Revealing' : 'Voting'
 })
 
 roomConnection.addEventListener('Vote', (event) => {
@@ -168,6 +185,19 @@ const setSpectator = async (isSpectator: boolean) => {
 }
 
 const leaveRoom = async () => {
+  const confirmLeave = confirm('Are you sure you want to leave the room?')
+  if (!confirmLeave) {
+    return
+  }
+
+  try {
+    await fetch(`/api/rooms/${props.roomId}/players/${currentPlayer.id}/leave`, {
+      method: 'POST',
+    })
+  } catch (error) {
+    console.error('Failed to leave room:', error)
+  }
+
   roomConnection.close()
   clearPlayerData()
   await router.push('/')
@@ -182,16 +212,23 @@ const leaveRoom = async () => {
           <CardTitle>Host Tools</CardTitle>
         </CardHeader>
         <CardContent class="flex flex-col gap-2">
-          <Button v-if="!reveal.state" variant="outline" :disabled="!hasVotes()" @click="updateRoom('reveal')">
+          <Button
+            v-if="!reveal.state"
+            :variant="hasVotes() ? 'default' : 'outline'"
+            :disabled="!hasVotes()"
+            @click="updateRoom('reveal')"
+            class="cursor-pointer"
+          >
             Reveal Scores
             {{
               !hasVotes()
                 ? ' (Nobody has voted yet)'
-                : `(${Object.keys(room.votes).length}/${room.players.length} votes)`
+                : `(${Object.keys(room.votes).length}/${room.players.filter((p) => !p.isSpectator && p.isConnected).length} voted)`
             }}
           </Button>
-          <Button v-if="reveal.state" variant="outline" @click="updateRoom('reset')">Next Round</Button>
-          <Button variant="destructive" @click="leaveRoom">Leave Room</Button>
+          <Button v-if="reveal.state" variant="default" @click="updateRoom('reset')" class="cursor-pointer">
+            Next Round
+          </Button>
         </CardContent>
       </Card>
 
@@ -200,9 +237,22 @@ const leaveRoom = async () => {
           <CardTitle>Player Options</CardTitle>
         </CardHeader>
         <CardContent class="flex flex-col gap-2">
-          <Button v-if="!currentPlayer.isSpectator" variant="outline" @click="setSpectator(true)">Spectate</Button>
-          <Button v-if="currentPlayer.isSpectator" variant="outline" @click="setSpectator(false)">Participate</Button>
-          <Button variant="destructive" @click="leaveRoom">Leave Room</Button>
+          <Button
+            v-if="!currentPlayer.isSpectator"
+            variant="outline"
+            @click="setSpectator(true)"
+            class="cursor-pointer"
+          >
+            Spectate
+          </Button>
+          <Button
+            v-if="currentPlayer.isSpectator"
+            variant="outline"
+            @click="setSpectator(false)"
+            class="cursor-pointer"
+          >
+            Participate
+          </Button>
         </CardContent>
       </Card>
 
@@ -230,6 +280,12 @@ const leaveRoom = async () => {
           <h3 class="font-bold">{{ currentState }}</h3>
         </div>
       </PlayerList>
+
+      <Card class="w-full">
+        <CardContent class="flex flex-col gap-2">
+          <Button variant="secondary" @click="leaveRoom" class="cursor-pointer">Leave Room</Button>
+        </CardContent>
+      </Card>
     </div>
 
     <div class="w-full max-w-7xl">

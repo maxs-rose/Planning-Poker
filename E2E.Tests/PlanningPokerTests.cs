@@ -35,7 +35,7 @@ public sealed class PlanningPokerTests(AspireManager aspireManager) : BasePlaywr
             var joinCodeText = await page.GetByTestId("JoinCode").TextContentAsync();
             Assert.Equal($"{room.JoinCode}", joinCodeText?.Trim());
             var players = await page.GetByTestId("PlayerNames").TextContentAsync();
-            Assert.Equal(" Testing player", players);
+            Assert.Equal(" Testing player ", players);
         });
     }
 

@@ -10,7 +10,7 @@ const version = import.meta.env.VITE_APP_VERSION ?? 'Development'
   <Toaster />
   <Navbar />
 
-  <div class="overflow-x-hidden mx-auto">
+  <div class="mx-auto">
     <RouterView />
   </div>
 

@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <UserSecretsId>07ec2024-bc21-4c0e-82bd-84074e5b1fb6</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,7 +16,10 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="HtmlSanitizer" Version="9.0.886" />
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.2"/>
+        <PackageReference Include="Refit" Version="8.0.0" />
+        <PackageReference Include="Refit.HttpClientFactory" Version="8.0.0" />
         <PackageReference Include="Serilog" Version="4.3.0"/>
         <PackageReference Include="Serilog.AspNetCore" Version="9.0.0"/>
         <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0"/>

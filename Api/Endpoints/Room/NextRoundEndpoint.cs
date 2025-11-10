@@ -3,23 +3,22 @@ using FastEndpoints;
 
 namespace Api.Endpoints.Room;
 
-internal sealed class ResetScoresEndpoint(
-    ILogger<RevealScoresEndpoint> logger,
+internal sealed class NextRoundEndpoint(
+    ILogger<NextRoundEndpoint> logger,
     RoomManager roomManager
 ) : EndpointWithoutRequest
 {
     public override void Configure()
     {
-        Get("/rooms/{Code}/reset");
+        Get("/rooms/{Code}/nextRound");
     }
 
     public override Task HandleAsync(CancellationToken ct)
     {
         var room = roomManager.GetRoom(Route<string>("Code")!)!;
+        logger.LogInformation("subscribers {Subs}", room.Channel.HasObservers);
 
-        logger.LogInformation("subscrubers {Subs}", room.Channel.HasObservers);
-
-        room.Reset();
+        room.NextRound();
 
         return Task.CompletedTask;
     }

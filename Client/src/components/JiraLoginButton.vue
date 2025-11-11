@@ -17,8 +17,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <a v-if="!isLoggedIn" href="/api/jira/login" class="cursor-pointer">
-    <Button class="w-full h-full bg-blue-800"> Log into Jira </Button>
+  <a v-if="!isLoggedIn" href="/api/jira/login">
+    <Button class="w-full h-full bg-blue-800 cursor-pointer"> Log into Jira </Button>
   </a>
   <Button v-else disabled class="w-full h-full bg-blue-800"> You are logged in to Jira </Button>
 </template>

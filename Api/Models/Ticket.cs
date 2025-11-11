@@ -10,9 +10,11 @@ public record Ticket(
     string Title,
     string Icon,
     string Description,
+    string Url,
     IEnumerable<string> Labels)
 {
     public static readonly Ticket Empty = new(
+        string.Empty,
         string.Empty,
         string.Empty,
         string.Empty,

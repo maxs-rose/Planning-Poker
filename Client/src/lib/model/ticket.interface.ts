@@ -5,7 +5,8 @@ export interface Ticket {
   title: string
   icon: string
   description: string
-  labels: string
+  url: string
+  labels: string[]
 }
 
 export interface ModifyTicketQueueResult {

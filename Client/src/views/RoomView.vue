@@ -211,7 +211,7 @@ const leaveRoom = async () => {
 
 <template>
   <div class="p-2 sm:p-6 flex flex-col gap-2 items-start justify-center lg:flex-row">
-    <div class="flex flex-col items-center justify-center gap-2 w-full lg:w-lg lg:min-w-lg 2xl:w-2xl 2xl:min-w-2xl">
+    <div class="flex flex-col items-center justify-center gap-2 w-full lg:w-lg lg:min-w-lg 2xl:w-2xl 2xl:min-w-3xl">
       <Card v-if="room.owner" class="w-full">
         <CardHeader>
           <CardTitle>Host Tools</CardTitle>

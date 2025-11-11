@@ -52,7 +52,8 @@ export const room: Room & { id: string } = reactive({
     title: '',
     icon: '',
     description: '',
-    labels: '',
+    url: '',
+    labels: [],
   },
 })
 

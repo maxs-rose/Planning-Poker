@@ -2,6 +2,7 @@ using Api.Contracts.Response;
 using Api.JiraIntegration.Clients;
 using Api.JiraIntegration.Configuration;
 using Api.JiraIntegration.Contracts.Request;
+using Api.JiraIntegration.Contracts.Response;
 using Api.Models;
 using Api.Services;
 using FastEndpoints;
@@ -29,18 +30,29 @@ internal sealed class QueueTicketEndpoint(RoomManager roomManager, IJiraApi jira
         
         var requestBody = new JiraGetIssueBulkRequest(req.Ids);
         
+        var resourceUrl = (await jiraApi.GetAccessibleResources(accessToken, ct)).Single(resource => resource.Id == req.ResourceId).Url;
         var issuesResponse = await jiraApi.GetIssues(accessToken, req.ResourceId, requestBody, cancellationToken: ct);
         foreach (var issue in issuesResponse.Issues)
-            room.QueueTicket(new Ticket(
-                issue.Id,
-                issue.Key,
-                issue.Fields.IssueType.Name,
-                issue.Fields.Summary,
-                issue.Fields.IssueType.IconUrl,
-                sanitizer.Sanitize(issue.RenderedFields.Description),
-                issue.Fields.Labels));
+            room.QueueTicket(CreateTicket(issue, resourceUrl));
         
         await Send.OkAsync(new ModifyTicketQueueResponse(room.Tickets, true), ct);
+    }
+
+    private Ticket CreateTicket(JiraGetIssueResponse issue, string baseUrl)
+    {
+        var descriptionRaw = issue.RenderedFields.Description
+            .Replace(" src=\"/", $" src=\"{baseUrl}/")
+            .Replace(" href=\"/", $" target=\"_blank\" href=\"{baseUrl}/");
+        var descriptionSanitized = sanitizer.Sanitize(descriptionRaw);
+        return new Ticket(
+            issue.Id,
+            issue.Key,
+            issue.Fields.IssueType.Name,
+            issue.Fields.Summary,
+            issue.Fields.IssueType.IconUrl,
+            descriptionSanitized,
+            $"{baseUrl}/browse/{issue.Key}",
+            issue.Fields.Labels);
     }
 }
 

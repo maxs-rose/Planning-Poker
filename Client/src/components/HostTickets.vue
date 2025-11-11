@@ -113,7 +113,7 @@ const discarded: Ticket[] = [] // Prevent 2-way binding from modifying room.tick
           <ComboboxInput :display-value="(v) => (v ? `Searching in ${v.name}` : `Select an organisation`)" />
           <ComboboxPortal>
             <ComboboxContent>
-              <ComboboxItem v-for="org in organisations" :key="org.id" :value="org">
+              <ComboboxItem v-for="org in organisations" :key="org.id" :value="org" @select="resetSearchSuggestions">
                 {{ org.name }}
               </ComboboxItem>
             </ComboboxContent>
@@ -131,7 +131,7 @@ const discarded: Ticket[] = [] // Prevent 2-way binding from modifying room.tick
           <DialogPortal>
             <DialogOverlay class="bg-[#000000A9] data-[state=open]:animate-overlayShow fixed inset-0 z-30" />
             <DialogContent
-              class="data-[state=open]:animate-contentShow fixed top-[50%] left-[50%] max-h-[85vh] w-[90vw] max-w-2xl translate-x-[-50%] translate-y-[-50%] rounded-[6px] bg-white p-[25px] focus:outline-none z-[100] overflow-y-auto"
+              class="bg-white dark:bg-gray-950 data-[state=open]:animate-contentShow fixed top-[50%] left-[50%] max-h-[85vh] w-[90vw] max-w-2xl translate-x-[-50%] translate-y-[-50%] rounded-[6px] p-[25px] focus:outline-none z-[100] overflow-y-auto"
             >
               <DialogTitle class="text-mauve12 m-0 text-[17px] font-semibold"> Add a ticket </DialogTitle>
               <DialogDescription class="text-mauve11 mt-[10px] mb-5 text-sm leading-normal">
@@ -153,11 +153,17 @@ const discarded: Ticket[] = [] // Prevent 2-way binding from modifying room.tick
                 >
                   <div
                     v-for="suggestion in searchSuggestions?.results"
-                    class="inline-flex w-full items-center gap-2 p-2 md:px-4 not-last:border-b cursor-pointer hover:bg-gray-200"
+                    class="inline-flex w-full items-center gap-2 p-2 md:px-4 not-last:border-b cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
                     @click="selectedSearchSuggestions.push(suggestion)"
                     tabindex="0"
                   >
-                    <img :src="suggestion.typeAvatarUrl" width="24" height="24" :alt="suggestion.type" />
+                    <img
+                      :src="suggestion.typeAvatarUrl"
+                      :alt="suggestion.type"
+                      :title="suggestion.type"
+                      class="text-[0px] w-6 h-6"
+                      onerror="this.onerror=null;this.src='/src/assets/empty_icon.svg'"
+                    />
                     <div class="w-full">
                       <span class="font-bold">{{ suggestion.key }}:</span> {{ suggestion.matchSummary }}
                     </div>
@@ -172,14 +178,23 @@ const discarded: Ticket[] = [] // Prevent 2-way binding from modifying room.tick
               </div>
 
               <h4 class="mt-4 text-md font-semibold">Selected tickets</h4>
-              <div class="w-full mt-2 border-2 rounded-lg max-h-100" v-if="selectedSearchSuggestions?.length > 0">
+              <div
+                class="w-full mt-2 border-2 rounded-lg max-h-100 overflow-y-auto"
+                v-if="selectedSearchSuggestions?.length > 0"
+              >
                 <div
                   v-for="(suggestion, index) in selectedSearchSuggestions"
-                  class="inline-flex w-full items-center gap-2 p-2 md:px-4 not-last:border-b cursor-pointer hover:bg-gray-200"
+                  class="inline-flex w-full items-center gap-2 p-2 md:px-4 not-last:border-b cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
                   @click="selectedSearchSuggestions.splice(index, 1)"
                   tabindex="0"
                 >
-                  <img :src="suggestion.typeAvatarUrl" width="24" height="24" :alt="suggestion.type" />
+                  <img
+                    :src="suggestion.typeAvatarUrl"
+                    :alt="suggestion.type"
+                    :title="suggestion.type"
+                    class="text-[0px] w-6 h-6"
+                    onerror="this.onerror=null;this.src='/src/assets/empty_icon.svg'"
+                  />
                   <div class="w-full">
                     <span class="font-bold">{{ suggestion.key }}:</span> {{ suggestion.matchSummary }}
                   </div>
@@ -190,13 +205,17 @@ const discarded: Ticket[] = [] // Prevent 2-way binding from modifying room.tick
               </div>
               <div class="mt-[25px] flex justify-end">
                 <DialogClose as-child>
-                  <Button @click="queueTickets" class="cursor-pointer">
+                  <Button
+                    @click="queueTickets"
+                    :disabled="(selectedSearchSuggestions?.length ?? 0) === 0"
+                    class="cursor-pointer"
+                  >
                     Add selected ticket{{ (selectedSearchSuggestions?.length ?? 0) > 1 ? 's' : '' }}
                   </Button>
                 </DialogClose>
               </div>
               <DialogClose
-                class="text-grass11 hover:bg-green4 focus:shadow-green7 absolute top-[10px] right-[10px] inline-flex h-[25px] w-[25px] appearance-none items-center justify-center rounded-full focus:shadow-[0_0_0_2px] focus:outline-none"
+                class="absolute top-[10px] right-[10px] inline-flex h-[25px] w-[25px] appearance-none items-center justify-center"
                 aria-label="Close"
               >
                 <Icon icon="lucide:x" />
@@ -213,15 +232,21 @@ const discarded: Ticket[] = [] // Prevent 2-way binding from modifying room.tick
         <div
           v-for="(ticket, index) in room.ticketQueue"
           :key="ticket.id"
-          class="inline-flex w-full items-center gap-2 p-2 sm:px-4 not-last:border-b hover:bg-gray-200"
+          class="inline-flex w-full items-center gap-2 p-2 sm:px-4 not-last:border-b hover:bg-gray-200 dark:hover:bg-gray-700"
           :class="{
-            'bg-blue-200': (room.ticketIndex ?? -1) === index,
-            'odd:bg-gray-100': (room.ticketIndex ?? -1) !== index,
+            'bg-blue-200 dark:bg-blue-800': (room.ticketIndex ?? -1) === index,
+            'odd:bg-secondary': (room.ticketIndex ?? -1) !== index,
           }"
           tabindex="0"
         >
           <div class="text-sm font-semibold text-gray-500">{{ index + 1 }}</div>
-          <img :src="ticket.icon" width="24" height="24" :alt="ticket.typeName" />
+          <img
+            :src="ticket.icon"
+            :alt="ticket.typeName"
+            :title="ticket.typeName"
+            class="text-[0px] w-6 h-6"
+            onerror="this.onerror=null;this.src='/src/assets/empty_icon.svg'"
+          />
           <div class="w-full">
             <span class="font-bold">{{ ticket.key }}:</span> {{ ticket.title }}
           </div>

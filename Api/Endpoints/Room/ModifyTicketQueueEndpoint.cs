@@ -1,4 +1,5 @@
 using Api.Contracts.Response;
+using Api.JiraIntegration.Contracts.Response;
 using Api.Services;
 using FastEndpoints;
 using JetBrains.Annotations;

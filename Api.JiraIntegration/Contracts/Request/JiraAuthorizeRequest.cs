@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 
-namespace Api.Contracts.Request;
+namespace Api.JiraIntegration.Contracts.Request;
 
 [PublicAPI]
 public record JiraAuthorizeRequest(

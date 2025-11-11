@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 
-namespace Api.Contracts.Response;
+namespace Api.JiraIntegration.Contracts.Response;
 
 [PublicAPI]
 public sealed record JiraGetIssueResponse(

@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace Api.Contracts.Response;
+namespace Api.JiraIntegration.Contracts.Response;
 
 [PublicAPI]
 public record JiraResourceDto(

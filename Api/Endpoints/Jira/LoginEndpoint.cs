@@ -1,5 +1,5 @@
-using Api.Contracts.Request;
-using Api.Models.Configuration;
+using Api.JiraIntegration.Configuration;
+using Api.JiraIntegration.Contracts.Request;
 using FastEndpoints;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;

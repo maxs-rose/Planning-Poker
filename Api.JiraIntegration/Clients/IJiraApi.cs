@@ -1,8 +1,8 @@
-using Api.Contracts.Request;
-using Api.Contracts.Response;
+using Api.JiraIntegration.Contracts.Request;
+using Api.JiraIntegration.Contracts.Response;
 using Refit;
 
-namespace Api.Clients;
+namespace Api.JiraIntegration.Clients;
 
 public interface IJiraApi
 {

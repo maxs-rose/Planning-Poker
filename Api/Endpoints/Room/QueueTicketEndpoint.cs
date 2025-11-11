@@ -1,8 +1,8 @@
-using Api.Clients;
-using Api.Contracts.Request;
 using Api.Contracts.Response;
+using Api.JiraIntegration.Clients;
+using Api.JiraIntegration.Configuration;
+using Api.JiraIntegration.Contracts.Request;
 using Api.Models;
-using Api.Models.Configuration;
 using Api.Services;
 using FastEndpoints;
 using Ganss.Xss;

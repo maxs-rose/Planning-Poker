@@ -1,6 +1,6 @@
-using Api.Clients;
-using Api.Contracts.Request;
-using Api.Models.Configuration;
+using Api.JiraIntegration.Clients;
+using Api.JiraIntegration.Configuration;
+using Api.JiraIntegration.Contracts.Request;
 using FastEndpoints;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;

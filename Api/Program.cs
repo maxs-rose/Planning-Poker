@@ -1,6 +1,5 @@
 using Api;
-using Api.Clients;
-using Api.Models.Configuration;
+using Api.JiraIntegration;
 using Api.Services;
 using FastEndpoints;
 using Ganss.Xss;
@@ -16,7 +15,7 @@ builder.Host.UseSerilog((ctx, services, config) =>
         .ReadFrom.Services(services);
 });
 
-builder.Services.Configure<JiraOptions>(builder.Configuration.GetSection(JiraOptions.SectionName));
+builder.Services.ConfigureJira(builder.Configuration);
 
 builder.Services
     .AddScoped<Moniker>()
@@ -24,10 +23,7 @@ builder.Services
     .AddSingleton<RoomManager>();
 
 builder.Services.AddFastEndpoints(o => o.SourceGeneratorDiscoveredTypes = DiscoveredTypes.All);
-
-var jiraOptions = builder.Configuration.GetSection(JiraOptions.SectionName).Get<JiraOptions>() ?? new JiraOptions();
-builder.Services.AddRefitClient<IJiraApi>().ConfigureHttpClient(c => c.BaseAddress = new Uri(jiraOptions.ApiBaseUrl));
-builder.Services.AddRefitClient<IJiraAuthApi>().ConfigureHttpClient(c => c.BaseAddress = new Uri(jiraOptions.AuthBaseUrl));
+builder.Services.AddJiraClients(builder.Configuration);
 
 builder.Services.AddDistributedMemoryCache();
 

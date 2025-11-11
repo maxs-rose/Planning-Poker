@@ -6,7 +6,7 @@ const router = useRouter()
 </script>
 
 <template>
-  <nav class="flex w-screen p-2 items-center justify-center">
+  <nav class="flex w-full p-2 items-center justify-center">
     <div class="flex items-center justify-between w-full max-w-2/3">
       <span
         class="select-none cursor-pointer flex flex-row items-center justify-center gap-2"

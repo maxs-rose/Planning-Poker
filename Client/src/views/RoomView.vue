@@ -205,8 +205,8 @@ const leaveRoom = async () => {
 </script>
 
 <template>
-  <div class="p-6 flex flex-col gap-2 items-start justify-center lg:flex-row">
-    <div class="flex flex-col items-center justify-center gap-2 w-xl min-w-lg">
+  <div class="p-2 sm:p-6 flex flex-col gap-2 items-start justify-center lg:flex-row">
+    <div class="flex flex-col items-center justify-center gap-2 w-full lg:w-xl lg:min-w-lg">
       <Card v-if="room.owner" class="w-full">
         <CardHeader>
           <CardTitle>Host Tools</CardTitle>
@@ -265,7 +265,7 @@ const leaveRoom = async () => {
         class="w-full"
       >
         <div class="flex flex-col gap-2">
-          <p class="flex gap-3 text-nowrap">
+          <p class="flex gap-3">
             Join Code:
             <span
               class="flex gap-2 items-center cursor-pointer"

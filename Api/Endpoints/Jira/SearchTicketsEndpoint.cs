@@ -1,6 +1,7 @@
 using Api.JiraIntegration.Clients;
-using Api.JiraIntegration.Configuration;
 using Api.JiraIntegration.Contracts.Response;
+using Api.JiraIntegration.Options;
+using Api.Options;
 using FastEndpoints;
 using JetBrains.Annotations;
 
@@ -14,6 +15,7 @@ internal sealed class SearchTicketsEndpoint(
     public override void Configure()
     {
         Get("/jira/issues");
+        FeatureFlag<JiraEnabledFlag>();
     }
     
     public override async Task HandleAsync(SearchTicketsRequest req, CancellationToken ct)

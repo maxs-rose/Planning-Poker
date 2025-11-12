@@ -1,4 +1,4 @@
-namespace Api.JiraIntegration.Configuration;
+namespace Api.JiraIntegration.Options;
 
 public sealed record JiraOptions
 {

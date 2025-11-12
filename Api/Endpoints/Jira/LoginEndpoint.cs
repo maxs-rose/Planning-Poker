@@ -1,5 +1,6 @@
-using Api.JiraIntegration.Configuration;
 using Api.JiraIntegration.Contracts.Request;
+using Api.JiraIntegration.Options;
+using Api.Options;
 using FastEndpoints;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
@@ -16,6 +17,7 @@ internal sealed class LoginEndpoint(
     public override void Configure()
     {
         Get("/jira/login");
+        FeatureFlag<JiraEnabledFlag>();
         ResponseCache(0, ResponseCacheLocation.None, noStore: true);
     }
     

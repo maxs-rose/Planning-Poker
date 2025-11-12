@@ -1,6 +1,7 @@
 using Api.JiraIntegration.Clients;
-using Api.JiraIntegration.Configuration;
 using Api.JiraIntegration.Contracts.Response;
+using Api.JiraIntegration.Options;
+using Api.Options;
 using FastEndpoints;
 
 namespace Api.Endpoints.Jira;
@@ -13,6 +14,7 @@ internal sealed class ResourcesEndpoint(
     public override void Configure()
     {
         Get("/jira/resources");
+        FeatureFlag<JiraEnabledFlag>();
     }
     
     public override async Task HandleAsync(CancellationToken ct)

@@ -11,8 +11,8 @@
     <ItemGroup>
         <PackageReference Include="Bogus" Version="35.6.4"/>
         <PackageReference Include="Dunet" Version="1.11.3"/>
-        <PackageReference Include="FastEndpoints" Version="7.0.1"/>
-        <PackageReference Include="FastEndpoints.Generator" Version="7.0.1">
+        <PackageReference Include="FastEndpoints" Version="7.1.1" />
+        <PackageReference Include="FastEndpoints.Generator" Version="7.1.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

@@ -1,6 +1,7 @@
 using Api.JiraIntegration.Clients;
-using Api.JiraIntegration.Configuration;
 using Api.JiraIntegration.Contracts.Request;
+using Api.JiraIntegration.Options;
+using Api.Options;
 using FastEndpoints;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,7 @@ internal sealed class CallbackEndpoint(
     public override void Configure()
     {
         Get("/jira/callback");
+        FeatureFlag<JiraEnabledFlag>();
         ResponseCache(0, ResponseCacheLocation.None, noStore: true);
     }
     

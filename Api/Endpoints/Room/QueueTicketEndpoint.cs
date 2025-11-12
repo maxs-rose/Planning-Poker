@@ -1,9 +1,10 @@
 using Api.Contracts.Response;
 using Api.JiraIntegration.Clients;
-using Api.JiraIntegration.Configuration;
 using Api.JiraIntegration.Contracts.Request;
 using Api.JiraIntegration.Contracts.Response;
+using Api.JiraIntegration.Options;
 using Api.Models;
+using Api.Options;
 using Api.Services;
 using FastEndpoints;
 using Ganss.Xss;
@@ -16,6 +17,7 @@ internal sealed class QueueTicketEndpoint(RoomManager roomManager, IJiraApi jira
     public override void Configure()
     {
         Post("/rooms/{Code}/queue");
+        FeatureFlag<JiraEnabledFlag>();
     }
 
     public override async Task HandleAsync(QueueTicketRequest req, CancellationToken ct)

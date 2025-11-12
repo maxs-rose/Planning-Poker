@@ -1,5 +1,5 @@
 using Api.JiraIntegration.Clients;
-using Api.JiraIntegration.Configuration;
+using Api.JiraIntegration.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Refit;

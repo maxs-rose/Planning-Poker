@@ -1,5 +1,6 @@
 using Api.JiraIntegration.Clients;
-using Api.JiraIntegration.Configuration;
+using Api.JiraIntegration.Options;
+using Api.Options;
 using FastEndpoints;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +13,7 @@ internal sealed class LoggedInEndpoint(
     public override void Configure()
     {
         Head("/jira/user");
+        FeatureFlag<JiraEnabledFlag>();
         ResponseCache(0, ResponseCacheLocation.None, noStore: true);
     }
     

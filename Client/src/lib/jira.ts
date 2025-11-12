@@ -1,11 +1,11 @@
 import type { JiraResource, JiraTicketSearchResults } from '@/lib/model/jira.interface.ts'
 
-export const getJiraUser = async (): Promise<boolean> => {
+export const getJiraUser = async (): Promise<number> => {
   try {
     const result = await fetch(`/api/jira/user`, { method: 'HEAD' })
-    return result.status < 400
+    return result.status
   } catch {
-    return false
+    return 999
   }
 }
 

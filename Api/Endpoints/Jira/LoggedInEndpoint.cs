@@ -1,13 +1,16 @@
+using System.Net;
 using Api.JiraIntegration.Clients;
 using Api.JiraIntegration.Options;
 using Api.Options;
 using FastEndpoints;
 using Microsoft.AspNetCore.Mvc;
+using Refit;
 
 namespace Api.Endpoints.Jira;
 
 internal sealed class LoggedInEndpoint(
-    IJiraApi jiraApi
+    IJiraApi jiraApi,
+    ILogger<LoggedInEndpoint> logger
 ) : EndpointWithoutRequest
 {
     public override void Configure()
@@ -26,7 +29,16 @@ internal sealed class LoggedInEndpoint(
             return;
         }
 
-        await jiraApi.GetAccessibleResources(accessToken, ct);
+        try
+        {
+            await jiraApi.GetAccessibleResources(accessToken, ct);
+        }
+        catch (ApiException ex) when(ex.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            logger.LogWarning(ex, "Jira API - Unauthorized");
+            await Send.UnauthorizedAsync(ct);
+            return;
+        }
         
         await Send.OkAsync(cancellation: ct);
     }

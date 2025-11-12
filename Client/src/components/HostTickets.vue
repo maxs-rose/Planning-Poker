@@ -26,6 +26,8 @@ const isLoggedIn = ref(false)
 const organisations = ref<JiraResource[]>()
 const selectedOrganisation = ref<JiraResource>()
 
+const showQueue = ref<boolean>(true)
+
 const searchSuggestions = ref<JiraTicketSearchResults>()
 const hideSearchSuggestions = ref<boolean>(false)
 const selectedSearchSuggestions = ref<JiraTicketResult[]>([])
@@ -174,7 +176,7 @@ const discarded: Ticket[] = [] // Prevent 2-way binding from modifying room.tick
                       </div>
                     </div>
                     <div
-                      v-if="(searchSuggestions?.results?.length ?? 0) === 0"
+                      v-show="(searchSuggestions?.results?.length ?? 0) === 0"
                       class="inline-flex w-full items-center p-2 md:px-4"
                     >
                       No search results found. Please try again.
@@ -185,7 +187,7 @@ const discarded: Ticket[] = [] // Prevent 2-way binding from modifying room.tick
                 <h4 class="mt-4 text-md font-semibold">Selected tickets</h4>
                 <div
                   class="w-full mt-2 border-2 rounded-lg max-h-100 overflow-y-auto"
-                  v-if="selectedSearchSuggestions?.length > 0"
+                  v-show="selectedSearchSuggestions?.length > 0"
                 >
                   <div
                     v-for="(suggestion, index) in selectedSearchSuggestions"
@@ -231,9 +233,12 @@ const discarded: Ticket[] = [] // Prevent 2-way binding from modifying room.tick
         </div>
       </div>
       <div class="border-t" v-if="(room.ticketQueue?.length ?? 0) > 0">
-        <h4 class="p-2 sm:p-4 font-semibold">Queued tickets</h4>
+        <div class="w-full p-2 sm:p-4 inline-flex gap-2 items-center cursor-pointer" @click="showQueue = !showQueue">
+          <h4 class="grow font-semibold">Queued tickets ({{ room.ticketQueue?.length ?? 0 }})</h4>
+          <Icon :icon="showQueue ? 'lucide:chevron-up' : 'lucide:chevron-down'" />
+        </div>
 
-        <VueDraggable v-model="discarded" ghost-class="ghost" @end="dragEndHandler">
+        <VueDraggable v-show="showQueue" v-model="discarded" ghost-class="ghost" @end="dragEndHandler">
           <div
             v-for="(ticket, index) in room.ticketQueue"
             :key="ticket.id"

@@ -18,7 +18,7 @@ const saveLoginWarningPreference = () => {
 }
 
 onMounted(async () => {
-  isLoggedIn.value = await getJiraUser()
+  isLoggedIn.value = (await getJiraUser()) < 400
 })
 </script>
 
@@ -26,7 +26,7 @@ onMounted(async () => {
   <Card v-if="room.ticket !== undefined && room.ticket.id.length > 0">
     <CardContent class="flex flex-col w-full gap-2">
       <div
-        v-if="!isLoggedIn && !dismissLoginWarning"
+        v-show="!isLoggedIn && !dismissLoginWarning"
         class="flex items-center p-2 lg:px-4 font-semibold bg-yellow-200 dark:bg-yellow-950 border-s-3 border-yellow-500 dark:border-yellow-700"
       >
         <div class="grow">
@@ -54,7 +54,7 @@ onMounted(async () => {
           <Button variant="outline" class="cursor-pointer"> More </Button>
         </a>
       </div>
-      <div v-if="room.ticket.labels.length > 0" class="inline-flex w-full gap-2">
+      <div v-show="room.ticket.labels.length > 0" class="inline-flex w-full gap-2">
         <span v-for="label in room.ticket.labels" class="bg-blue-600 text-white rounded-full px-2.5 py-0.5">{{
           label
         }}</span>

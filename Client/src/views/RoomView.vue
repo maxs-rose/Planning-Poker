@@ -212,6 +212,44 @@ const leaveRoom = async () => {
 <template>
   <div class="p-2 sm:p-6 flex flex-col gap-2 items-start justify-center lg:flex-row">
     <div class="flex flex-col items-center justify-center gap-2 w-full lg:w-lg lg:min-w-lg 2xl:w-2xl 2xl:min-w-3xl">
+      <PlayerList
+        :owner="room.owner"
+        :players="room.players"
+        :reveal="reveal.state"
+        :roomId="props.roomId"
+        :votes="room.votes"
+        class="w-full"
+      >
+        <div class="flex flex-col gap-2">
+          <h3 class="flex gap-3 md:text-lg mb-1">
+            Join Code:
+            <span
+              class="flex gap-2 items-center cursor-pointer font-semibold"
+              data-testid="JoinCode"
+              title="Copy code to the clipboard"
+              @click="copyToClipboard(props.roomId)"
+            >
+              {{ props.roomId }}
+              <Icon icon="radix-icons:copy" />
+            </span>
+          </h3>
+
+          <h3 class="font-bold">
+            Current state:
+            <span
+              class="px-2.5 py-0.5 rounded-full"
+              :class="{
+                'bg-destructive text-white': currentState === 'Voting',
+                'bg-primary text-primary-foreground': currentState === 'Revealing',
+              }"
+              >{{ currentState }}</span
+            >
+          </h3>
+        </div>
+      </PlayerList>
+
+      <TicketDetails class="w-full" />
+
       <Card v-if="room.owner" class="w-full">
         <CardHeader>
           <CardTitle>Host Tools</CardTitle>
@@ -261,33 +299,6 @@ const leaveRoom = async () => {
           </Button>
         </CardContent>
       </Card>
-
-      <TicketDetails class="w-full" />
-
-      <PlayerList
-        :owner="room.owner"
-        :players="room.players"
-        :reveal="reveal.state"
-        :roomId="props.roomId"
-        :votes="room.votes"
-        class="w-full"
-      >
-        <div class="flex flex-col gap-2">
-          <p class="flex gap-3">
-            Join Code:
-            <span
-              class="flex gap-2 items-center cursor-pointer"
-              data-testid="JoinCode"
-              @click="copyToClipboard(props.roomId)"
-            >
-              {{ props.roomId }}
-              <Icon icon="radix-icons:copy" />
-            </span>
-          </p>
-
-          <h3 class="font-bold">{{ currentState }}</h3>
-        </div>
-      </PlayerList>
 
       <Card class="w-full">
         <CardContent class="flex flex-col gap-2">

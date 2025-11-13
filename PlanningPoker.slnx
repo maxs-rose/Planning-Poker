@@ -1,7 +1,6 @@
 <Solution>
-  <Project Path="Api.JiraIntegration\Api.JiraIntegration.csproj" Type="Classic C#" />
+  <Project Path="Api.JiraIntegration\Api.JiraIntegration.csproj" Type="C#" />
   <Project Path="Api\Api.csproj" />
   <Project Path="AppHost\AppHost.csproj" />
-  <Project Path="Client\Client.esproj" />
   <Project Path="E2E.Tests\E2E.Tests.csproj" />
 </Solution>

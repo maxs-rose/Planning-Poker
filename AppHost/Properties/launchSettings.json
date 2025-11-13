@@ -5,7 +5,7 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "https://poker.aspire.localhost:17266;http://poker.aspire.localhost:15123",
+      "applicationUrl": "https://aspire.dev.localhost:17266;http://aspire.dev.localhost:15123",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "DOTNET_ENVIRONMENT": "Development",

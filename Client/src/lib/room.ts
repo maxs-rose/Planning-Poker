@@ -1,6 +1,7 @@
 import { reactive, watch } from 'vue'
 import type { Room } from '@/lib/model/room.interface.ts'
 import type { Init } from '@/lib/model/init.interface.ts'
+import type { ModifyTicketQueueResult, Ticket } from '@/lib/model/ticket.interface.ts'
 
 const loadPlayerFromStorage = () => {
   try {
@@ -44,6 +45,16 @@ export const room: Room & { id: string } = reactive({
   players: [],
   votes: {},
   revealed: false,
+  ticket: {
+    id: '',
+    key: '',
+    typeName: '',
+    title: '',
+    icon: '',
+    description: '',
+    url: '',
+    labels: [],
+  },
 })
 
 export const createRoom = async (name: string): Promise<{ joinCode: string }> => {
@@ -117,6 +128,9 @@ export const processRoomState = (roomState: Init) => {
   room.friendlyName = roomState.friendlyName
   room.owner = roomState.owner
   room.players = roomState.players
+  room.ticketQueue = roomState.ticketQueue
+  room.ticketIndex = roomState.ticketIndex
+  room.ticket = roomState.ticket
 
   room.votes = Object.fromEntries(
     roomState.votes.filter((vote) => vote.value !== null).map((vote) => [vote.voter, vote.value]),
@@ -142,6 +156,28 @@ export const vote = async (value: number) => {
   })
 
   currentVote.vote = value
+}
+
+export const addToTicketQueue = async (resourceId: string, ticketIds: string[]): Promise<boolean> => {
+  const params = new URLSearchParams()
+  params.append('resourceId', resourceId)
+  ticketIds.forEach((ticketId: string) => params.append('ids', ticketId))
+
+  const result = await fetch(`/api/rooms/${room.id}/queue?${params}`, { method: 'POST' })
+  const queue: ModifyTicketQueueResult = await result.json()
+  room.ticketQueue = queue.tickets
+  return queue.success
+}
+
+export const modifyTicketQueue = async (fromIndex: number, toIndex?: number): Promise<boolean> => {
+  const params = new URLSearchParams()
+  params.append('fromIndex', fromIndex.toFixed())
+  if (toIndex !== undefined) params.append('toIndex', toIndex.toFixed())
+
+  const result = await fetch(`/api/rooms/${room.id}/modifyQueue?${params}`, { method: 'POST' })
+  const queue: ModifyTicketQueueResult = await result.json()
+  room.ticketQueue = queue.tickets
+  return queue.success
 }
 
 export const clearPlayerData = () => {

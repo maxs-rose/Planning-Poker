@@ -39,12 +39,12 @@ const setHost = async (playerId: string) => {
 </script>
 
 <template>
-  <Card class="p-6">
+  <Card class="py-6">
     <CardHeader>
       <CardTitle class="font-normal"><slot /></CardTitle>
     </CardHeader>
     <CardContent>
-      <div class="grid grid-cols-3 gap-2 items-center">
+      <div class="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
         <div class="font-bold">Players</div>
 
         <template v-for="player in sortedPlayers">
@@ -52,16 +52,17 @@ const setHost = async (playerId: string) => {
             :class="{
               'font-bold': currentPlayer.id === player.id,
               'text-gray-400': !player.isConnected,
+              'ps-6': player.isOwner,
             }"
-            class="col-start-1 relative"
+            class="col-start-1 relative wrap-anywhere"
             data-testid="PlayerNames"
           >
-            <Icon v-if="player.isOwner" class="absolute -left-6 top-1.5" icon="radix-icons:sketch-logo" />
+            <Icon v-if="player.isOwner" class="absolute left-0 top-1.25" icon="radix-icons:sketch-logo" />
             {{ player.name }}
             <span v-if="!player.isConnected" class="text-xs ml-1">(disconnected)</span>
           </div>
 
-          <div v-if="props.reveal" :class="{ 'text-gray-400': !player.isConnected }">
+          <div v-if="props.reveal" class="text-end" :class="{ 'text-gray-400': !player.isConnected }">
             {{ votes[player.id!] || 'Abstained' }}
           </div>
           <div v-else :class="{ 'text-gray-400': !player.isConnected }">

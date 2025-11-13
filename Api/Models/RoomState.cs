@@ -7,4 +7,7 @@ public record RoomState(
     List<Player> Players,
     List<Vote> Votes,
     Guid OwnerId,
-    bool Revealed);
+    bool Revealed,
+    Ticket Ticket,
+    List<Ticket>? TicketQueue = null,
+    int? TicketIndex = null);

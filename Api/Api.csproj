@@ -5,16 +5,18 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <UserSecretsId>07ec2024-bc21-4c0e-82bd-84074e5b1fb6</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Bogus" Version="35.6.4"/>
         <PackageReference Include="Dunet" Version="1.11.3"/>
-        <PackageReference Include="FastEndpoints" Version="7.0.1"/>
-        <PackageReference Include="FastEndpoints.Generator" Version="7.0.1">
+        <PackageReference Include="FastEndpoints" Version="7.1.1" />
+        <PackageReference Include="FastEndpoints.Generator" Version="7.1.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="HtmlSanitizer" Version="9.0.886" />
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.2"/>
         <PackageReference Include="Serilog" Version="4.3.0"/>
         <PackageReference Include="Serilog.AspNetCore" Version="9.0.0"/>
@@ -27,6 +29,10 @@
         <Content Include="..\.dockerignore">
             <Link>.dockerignore</Link>
         </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Api.JiraIntegration\Api.JiraIntegration.csproj" />
     </ItemGroup>
 
 </Project>

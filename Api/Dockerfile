@@ -26,6 +26,9 @@ WORKDIR /src
 COPY ["Api/Api.csproj", "Api/"]
 RUN dotnet restore "Api/Api.csproj"
 COPY Api Api
+COPY ["Api.JiraIntegration/Api.JiraIntegration.csproj", "Api.JiraIntegration/"]
+RUN dotnet restore "Api.JiraIntegration/Api.JiraIntegration.csproj"
+COPY Api.JiraIntegration Api.JiraIntegration
 WORKDIR "/src/Api"
 RUN dotnet build "./Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 

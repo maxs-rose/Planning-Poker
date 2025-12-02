@@ -29,7 +29,7 @@ internal sealed class LoginEndpoint(
 
         var nextUrl = $"{_options.AuthBaseUrl}{_options.AuthorizeUrl}";
         var queryParams = new JiraAuthorizeRequest(_options.Audience, _options.ClientId, _options.Scope, 
-            $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{JiraOptions.CallbackUrl}", state, "code", 
+            $"https://{HttpContext.Request.Host}{JiraOptions.CallbackUrl}", state, "code", 
             "consent");
         
         var redirectUri = QueryHelpers.AddQueryString(nextUrl, queryParams.ToDictionary());

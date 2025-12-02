@@ -39,7 +39,7 @@ internal sealed class CallbackEndpoint(
             _options.ClientId,
             _options.ClientSecret,
             req.Code,
-            $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{JiraOptions.CallbackUrl}");
+            $"https://{HttpContext.Request.Host}{JiraOptions.CallbackUrl}");
         
         var jiraToken = await jiraAuthApi.GetToken(body, ct);
         HttpContext.Session.SetString(JiraSession.TokenKey, jiraToken.AccessToken);
